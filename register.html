@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Account</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/register.css">
+</head>
+<body>
+
+    <!-- Navigation Header (Aligned with Profile Layout) -->
+    <header class="top-header">
+        <div class="top-header-inner">
+            <a href="register.html" class="logo-box">
+                <img src="emotiScan_logo.png" alt="EmotiScan Logo" class="header-logo">
+            </a>
+        </div>
+    </header>
+
+    <!-- Registration Card -->
+    <main class="main-wrapper">
+        <div class="register-card-container">
+            <div class="register-card">
+
+                <!-- Card Header -->
+                <div class="card-header">
+                    <div class="icon-badge">
+                        <img src="icons/register.svg" alt="Register Icon">
+                    </div>
+                    <h1 class="card-title">Register Account</h1>
+                    <p class="card-subtitle">Join the EmotiScan-Emotion Recognition</p>
+                </div>
+
+                <!-- Registration Form -->
+                <form id="registerForm" class="form-fields-container" novalidate>
+
+                    <!-- First Name and Last Name -->
+                    <div class="form-row-2col">
+                        <div class="form-field-group">
+                            <label class="field-label" for="firstName">First Name</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="firstName" class="custom-input" placeholder="e.g. Jane" required>
+                            </div>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label class="field-label" for="lastName">Last Name</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="lastName" class="custom-input" placeholder="e.g. Doe" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Birthdate -->
+                    <div class="form-field-group">
+                        <div class="field-label-row">
+                            <label class="field-label" for="birthdate">Birthdate</label>
+                            <div class="field-sublabel">
+                                <svg viewBox="0 0 11 12">
+                                    <path d="M9.167 1.333H1.833C1.097 1.333.5 1.93.5 2.667v7.333c0 .737.597 1.333 1.333 1.333h7.334c.736 0 1.333-.596 1.333-1.333V2.667c0-.737-.597-1.334-1.333-1.334zm0 8.667H1.833V4.667h7.334v5.333zm0-6.667H1.833V2.667h7.334v.666z"/>
+                                </svg>
+                                <span>DD / MM / YYYY</span>
+                            </div>
+                        </div>
+                        <div class="input-wrapper">
+                            <input type="text" id="birthdate" class="custom-input" placeholder="mm / dd / yyyy" maxlength="14">
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-field-group">
+                        <label class="field-label" for="email">Email</label>
+                        <div class="input-wrapper has-right-icon">
+                            <input type="email" id="email" class="custom-input" placeholder="jane.doe@example.com" required>
+                            <img src="icons/check.svg" alt="Check Icon">
+                        </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="form-field-group">
+                        <label class="field-label" for="username">Username</label>
+                        <div class="input-wrapper has-left-icon">
+                            <div class="input-icon-left">
+                                <img src="icons/person.svg" alt="Username Icon">
+                            </div>
+                            <input type="text" id="username" class="custom-input" placeholder="jane.doe" required>
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-field-group password-field">
+                        <div class="field-label-row">
+                            <label class="field-label" for="password">Password</label>
+                        </div>
+                        <div class="input-wrapper has-right-icon">
+                            <input type="password" id="password" class="custom-input" placeholder="••••••••••••" required>
+                            <button type="button" id="togglePasswordBtn" class="input-icon-right" title="Toggle password visibility" aria-label="Toggle password visibility">
+                                <svg id="eyeIcon" width="17" height="12" viewBox="0 0 17 12" fill="none">
+                                    <path d="M1 6C1 6 3.72727 1 8.5 1C13.2727 1 16 6 16 6C16 6 13.2727 11 8.5 11C3.72727 11 1 6 1 6Z" stroke="#7D7480" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M8.5 8C9.60457 8 10.5 7.10457 10.5 6C10.5 4.89543 9.60457 4 8.5 4C7.39543 4 6.5 4.89543 6.5 6C6.5 7.10457 7.39543 8 8.5 8Z" stroke="#7D7480" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-submit">
+                        <span class="btn-text">Create Account / Register</span>
+                        <div class="btn-icon">
+                            <svg viewBox="0 0 12 12">
+                                <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="divider-container">
+                    <div class="divider-line"></div>
+                    <span class="divider-text">or</span>
+                    <div class="divider-line"></div>
+                </div>
+
+                <!-- Login Prompt -->
+                <div class="login-prompt">
+                    <span class="login-prompt-text">Already have an account? </span>
+                    <a href="login.html">
+                        <button type="button" class="login-link" id="loginLink">Log In</button>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="status" aria-live="polite">Action performed</div>
+
+    <!-- External JavaScript -->
+    <script src="script/register.js"></script>
+</body>
+</html>

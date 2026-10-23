@@ -1,0 +1,305 @@
+<!-- profile.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmotiScan - My Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+
+    <!-- Top Navigation Header -->
+    <header class="top-header">
+        <div class="top-header-inner">
+            <a href="dashboard.html" class="logo-box">
+                <img class="header-logo" src="emotiScan_logo.png" alt="EmotiScan Logo" />
+            </a>
+
+            <nav class="nav-links">
+                <button class="nav-item" id="navDashboard" onclick="location.href='dashboard.html'">
+                    <span class="nav-icon icon-dashboard"></span>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" id="navCapture" onclick="location.href='capture_photo.html'">
+                    <span class="nav-icon icon-capture"></span>
+                    <span>Capture</span>
+                </button>
+                <button class="nav-item" id="navUpload" onclick="location.href='upload_photo.html'">
+                    <span class="nav-icon icon-upload"></span>
+                    <span>Upload</span>
+                </button>
+                <button class="nav-item" id="navHistory" onclick="location.href='history.html'">
+                    <span class="nav-icon icon-history"></span>
+                    <span>History</span>
+                </button>
+            </nav>
+
+            <div class="user-profile-badge" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" style="cursor: pointer;">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="User Avatar" class="user-avatar" id="headerUserAvatar" onerror="this.src='https://placehold.co/100x100/F4DAFF/794A98?text=JD'">
+                <span class="user-name" id="headerUserName">Jane Doe</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Profile Content Area -->
+    <div class="main-content">
+        <div class="content-container">
+            
+            <!-- Page Heading -->
+            <div class="page-header-section">
+                <h1 class="page-title">My Profile</h1>
+                <p class="page-subtitle">View and manage your EmotiScan account information.</p>
+            </div>
+
+            <!-- Profile Overview Card -->
+            <div class="profile-card">
+                <div class="profile-left-info">
+                    <div class="avatar-container">
+                        <div class="avatar-wrapper">
+                            <img id="profileCardAvatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80" alt="Profile Avatar" />
+                        </div>
+                        
+                        <!-- Hidden file input directly launching device file manager -->
+                        <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" />
+                        <label for="avatarFileInput" class="avatar-badge-icon" title="Change Profile Picture">
+                            <img src="icons/pfp.svg" alt="PFP Icon" class="icon-pfp" />
+                        </label>
+                    </div>
+                    <div class="profile-text-info">
+                        <div class="profile-display-name" id="profileCardName">Jane Doe</div>
+                        <div class="member-since-row">
+                            <img src="icons/member_since.svg" alt="Member Since Icon" class="icon-member-since" />
+                            <span class="member-since-text">Member Since: October 2024</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-action-buttons">
+                    <button class="btn-secondary" id="openChangePasswordBtn">
+                        <img src="icons/change_pass.svg" alt="Change Password Icon" class="icon-change-pass" />
+                        <span>Change Password</span>
+                    </button>
+                    <button class="btn-primary" id="openEditProfileBtn">
+                        <img src="icons/edit_profile.svg" alt="Edit Profile Icon" class="icon-edit-profile" />
+                        <span>Edit Profile</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Account Details Box -->
+            <div class="card-box">
+                <div class="card-header-row">
+                    <h2 class="card-title">Account Details</h2>
+                    <p class="card-desc">View and update your account information.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="form-field-group">
+                        <label class="form-label">First Name</label>
+                        <div class="form-input-wrapper">
+                            <div class="form-input-display" id="dispFirstName">Jane</div>
+                            <img src="icons/name.svg" alt="Name Icon" class="input-icon-img" />
+                        </div>
+                    </div>
+                    <div class="form-field-group">
+                        <label class="form-label">Last Name</label>
+                        <div class="form-input-wrapper">
+                            <div class="form-input-display" id="dispLastName">Doe</div>
+                            <img src="icons/name.svg" alt="Name Icon" class="input-icon-img" />
+                        </div>
+                    </div>
+                    <div class="form-field-group">
+                        <label class="form-label">Username</label>
+                        <div class="form-input-wrapper">
+                            <div class="form-input-display" id="dispUsername">jane.doe</div>
+                            <img src="icons/username.svg" alt="Username Icon" class="input-icon-img" />
+                        </div>
+                    </div>
+                    <div class="form-field-group">
+                        <label class="form-label">Birthdate</label>
+                        <div class="form-input-wrapper">
+                            <div class="form-input-display" id="dispBirthdate">October 14, 2002</div>
+                            <img src="icons/birthday.svg" alt="Birthday Icon" class="input-icon-img" />
+                        </div>
+                    </div>
+                    <div class="form-field-group full-width">
+                        <label class="form-label">Email</label>
+                        <div class="form-input-wrapper">
+                            <div class="form-input-display" id="dispEmail">jane.doe@example.com</div>
+                            <img src="icons/email.svg" alt="Email Icon" class="input-icon-img" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Session Box -->
+            <div class="card-box session-box">
+                <div class="session-header-flex">
+                    <div class="session-icon-wrapper">
+                        <img src="icons/security.svg" alt="Logout Icon" class="icon-session-logout" />
+                    </div>
+                    <div class="session-title-group">
+                        <h3 class="card-title session-title-override">Account Session</h3>
+                        <p class="card-desc">Log out of your current EmotiScan session.</p>
+                    </div>
+                </div>
+                <div class="session-action-card">
+                    <div class="session-text-group">
+                        <span class="session-action-desc">Sign out of your account on this browser.</span>
+                    </div>
+                    <button class="btn-danger" id="openLogoutModalBtn">
+                        <img src="icons/logout.svg" alt="Logout Icon" class="icon-btn-danger" />
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal Pop-up -->
+    <div class="modal-overlay" id="editProfileModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-flex">
+                    <div class="modal-icon-circle">
+                        <img src="icons/edit_profile_popup.svg" alt="Edit Profile Popup Icon" class="icon-modal-edit" />
+                    </div>
+                    <div>
+                        <h3 class="modal-heading-title">Edit Profile</h3>
+                        <p class="modal-heading-desc">Update your personal account information.</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="closeEditModalBtn">
+                    <img src="icons/x.svg" alt="Close Icon" class="icon-modal-close" />
+                </button>
+            </div>
+            <form id="editProfileForm" class="modal-body">
+                <div class="modal-row-flex">
+                    <div class="form-field-group modal-flex-1">
+                        <label class="form-label">First Name</label>
+                        <div class="form-input-wrapper">
+                            <input type="text" id="inputFirstName" class="modal-input" placeholder="Jane" required />
+                            <img src="icons/name.svg" alt="Name Icon" class="input-icon-img" />
+                        </div>
+                    </div>
+                    <div class="form-field-group modal-flex-1">
+                        <label class="form-label">Last Name</label>
+                        <div class="form-input-wrapper">
+                            <input type="text" id="inputLastName" class="modal-input" placeholder="Doe" required />
+                            <img src="icons/name.svg" alt="Name Icon" class="input-icon-img" />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-field-group">
+                    <label class="form-label">Username</label>
+                    <div class="form-input-wrapper">
+                        <input type="text" id="inputUsername" class="modal-input" placeholder="jane.doe" required />
+                        <img src="icons/username.svg" alt="Username Icon" class="input-icon-img" />
+                    </div>
+                </div>
+                <div class="form-field-group">
+                    <label class="form-label">Email</label>
+                    <div class="form-input-wrapper">
+                        <input type="email" id="inputEmail" class="modal-input" placeholder="jane.doe@example.com" required />
+                        <img src="icons/email.svg" alt="Email Icon" class="input-icon-img" />
+                    </div>
+                </div>
+                <div class="form-field-group">
+                    <label class="form-label">Birthdate</label>
+                    <div class="form-input-wrapper">
+                        <input type="text" id="inputBirthdate" class="modal-input" placeholder="October 14, 2002" required />
+                        <img src="icons/birthday.svg" alt="Birthday Icon" class="input-icon-img" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="cancelEditModalBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal Pop-up -->
+    <div class="modal-overlay" id="changePasswordModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-flex">
+                    <div class="modal-icon-circle">
+                        <img src="icons/change_pass_for_popup.svg" alt="Change Password Popup Icon" class="icon-modal-pass" />
+                    </div>
+                    <div>
+                        <h3 class="modal-heading-title">Change Password</h3>
+                        <p class="modal-heading-desc">Update your password to keep your account secure.</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="closePasswordModalBtn">
+                    <img src="icons/x.svg" alt="Close Icon" class="icon-modal-close" />
+                </button>
+            </div>
+            <form id="changePasswordForm" class="modal-body">
+                <div class="form-field-group">
+                    <label class="form-label">Current Password</label>
+                    <div class="form-input-wrapper">
+                        <input type="password" id="currentPassword" class="modal-input" placeholder="••••••••" required />
+                        <img src="icons/lock.svg" alt="Lock Icon" class="input-icon-img" />
+                    </div>
+                </div>
+                <div class="form-field-group">
+                    <label class="form-label">New Password</label>
+                    <div class="form-input-wrapper">
+                        <input type="password" id="newPassword" class="modal-input" placeholder="••••••••" required />
+                        <img src="icons/lock.svg" alt="Lock Icon" class="input-icon-img" />
+                    </div>
+                    <span class="password-hint">Must be at least 8 characters with letters & numbers</span>
+                </div>
+                <div class="form-field-group">
+                    <label class="form-label">Confirm New Password</label>
+                    <div class="form-input-wrapper">
+                        <input type="password" id="confirmPassword" class="modal-input" placeholder="••••••••" required />
+                        <img src="icons/lock.svg" alt="Lock Icon" class="input-icon-img" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="cancelPasswordModalBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal Pop-up -->
+    <div class="modal-overlay" id="logoutModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-flex">
+                    <div class="modal-icon-circle logout-circle-override">
+                        <img src="icons/logout_for_popup.svg" alt="Logout Popup Icon" class="icon-modal-logout" />
+                    </div>
+                    <div>
+                        <h3 class="modal-heading-title">Confirm Logout</h3>
+                        <p class="modal-heading-desc">Are you sure you want to log out of EmotiScan?</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="closeLogoutModalBtn">
+                    <img src="icons/x.svg" alt="Close Icon" class="icon-modal-close" />
+                </button>
+            </div>
+            <div class="modal-body modal-logout-body">
+                <p class="logout-text">
+                    You will be returned to the login screen and will need to log in again to access your account details and history.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancelLogoutModalBtn">Cancel</button>
+                <button type="button" class="btn-danger" id="confirmLogoutBtn">Log Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="script/profile.js"></script>
+</body>
+</html>

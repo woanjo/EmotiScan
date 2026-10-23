@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmotiScan - History</title>
+    
+    <!-- Google Fonts import for Figma typography (Outfit, Inter, Plus Jakarta Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/history.css">
+</head>
+<body>
+
+    <header class="top-header">
+        <div class="top-header-inner">
+            <a href="#" class="logo-box">
+                <img class="header-logo" src="emotiScan_logo.png" alt="EmotiScan Logo" />
+            </a>
+
+            <nav class="nav-links">
+                <button class="nav-item" id="navDashboard" onclick="location.href='dashboard.html'">
+                    <span class="nav-icon icon-dashboard"></span>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" id="navCapture" onclick="location.href='capture_photo.html'">
+                    <span class="nav-icon icon-capture"></span>
+                    <span>Capture</span>
+                </button>
+                <button class="nav-item" id="navUpload" onclick="location.href='upload_photo.html'">
+                    <span class="nav-icon icon-upload"></span>
+                    <span>Upload</span>
+                </button>
+                <button class="nav-item active" id="navHistory" onclick="location.href='history.html'">
+                    <span class="nav-icon icon-history"></span>
+                    <span>History</span>
+                </button>
+            </nav>
+
+            <div class="user-profile-badge" onclick="location.href='profile.html'" style="cursor: pointer;">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="User Avatar" class="user-avatar" onerror="this.src='https://placehold.co/100x100/F4DAFF/794A98?text=JD'">
+                <span class="user-name">Jane Doe</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="dashboard-inner" style="gap: 24px;">
+            
+            <!-- History Page Title Banner -->
+            <div class="page-title-group" style="display: flex; flex-direction: column; gap: 4px;">
+                <h1 class="section-header" style="font-size: 32px; line-height: 40px;">History</h1>
+                <p class="welcome-description" style="font-size: 15px;">Previous emotion recognition results logged across sessions.</p>
+            </div>
+
+            <!-- Action Toolbar -->
+            <div class="toolbar" style="padding: 16px; background: #F1F3FF; border-radius: 12px; border: 1px solid rgba(207, 195, 208, 0.30); display: flex; justify-content: space-between; align-items: center;">
+                <div class="select-all-wrapper" id="selectAllBtn" style="display: flex; align-items: center; gap: 16px; cursor: pointer;">
+                    <div class="checkbox" id="selectAllCheckbox"></div>
+                    <span class="select-all-text" style="color: #161C28; font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;">Select All</span>
+                    <div class="selected-counter" style="font-size: 12px; font-weight: 700; font-family: 'Inter', sans-serif;">
+                        <span class="count" id="selectedCount" style="color: #794A98;">0</span>
+                        <span class="label" style="color: #4C444F;"> items selected</span>
+                    </div>
+                </div>
+                <button class="delete-selected-btn" id="deleteSelectedBtn" style="padding: 8px 16px; opacity: 0.5; background: rgba(253, 169, 198, 0.60); border-radius: 12px; border: none; display: flex; align-items: center; gap: 8px; cursor: pointer; pointer-events: none; transition: opacity 0.2s;">
+                    <img src="icons/delete.svg" alt="Delete Icon" width="14" height="14" onerror="this.onerror=null; this.outerHTML='<svg width=&quot;12&quot; height=&quot;14&quot; viewBox=&quot;0 0 12 14&quot; fill=&quot;#7A3A53&quot;><path d=&quot;M1 3h10v10H1z&quot;/></svg>'" />
+                    <span style="color: #7A3A53; font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 600;">Delete Selected</span>
+                </button>
+            </div>
+
+            <!-- History Logs Grid -->
+            <div class="history-grid" id="historyGrid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; width: 100%;">
+                <!-- Dynamically populated via JavaScript -->
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Detail Pop-up Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-container" id="modalContainer" onclick="event.stopPropagation()">
+            <button class="modal-close-btn" id="modalCloseBtn">
+                <svg width="10.5" height="10.5" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="modal-header-text" id="modalTitle">Analysis Result</div>
+            <div class="modal-timestamp-wrapper">
+                <svg width="13.33" height="13.33" viewBox="0 0 14 14" fill="#7D7480" id="modalTimestampCircle"><circle cx="7" cy="7" r="6"/></svg>
+                <span class="modal-timestamp" id="modalTimestamp">Oct 24, 2025 • 10:42 AM</span>
+            </div>
+            
+            <div class="modal-preview-card" id="modalPreviewCard">
+                <div class="modal-image-wrapper">
+                    <img id="modalImage" src="" alt="Emotion result">
+                </div>
+                <div class="modal-emotion-display">
+                    <div class="modal-emotion-dot" id="modalDot"></div>
+                    <div class="modal-emotion-title" id="modalEmotionName">HAPPINESS</div>
+                </div>
+                <div class="modal-primary-state-label">PRIMARY STATE DETECTED</div>
+            </div>
+
+            <button class="modal-delete-btn" id="modalDeleteBtn">
+                <img src="icons/delete.svg" alt="Delete Icon" width="14" height="14" onerror="this.onerror=null; this.outerHTML='<svg width=&quot;12&quot; height=&quot;14&quot; viewBox=&quot;0 0 12 14&quot; fill=&quot;#BA1A1A&quot;><path d=&quot;M1 3h10v10H1z&quot;/></svg>'" />
+                <span class="modal-delete-text">Delete</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Toast Popup -->
+    <div id="toast" class="toast">Action completed</div>
+
+    <!-- External JavaScript -->
+    <script src="script/history.js" defer></script>
+</body>
+</html>

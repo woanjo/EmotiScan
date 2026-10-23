@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    
+    <!-- Google Fonts import for Figma typography (Outfit, Inter, Plus Jakarta Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="top-header">
+        <div class="top-header-inner">
+            <a href="dashboard.html" class="logo-box">
+                <img class="header-logo" src="emotiScan_logo.png" alt="EmotiScan Logo" />
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="nav-links" aria-label="Main navigation">
+                <!-- Dashboard is active -->
+                <button class="nav-item active" id="navDashboard" onclick="location.href='dashboard.html'" aria-current="page">
+                    <span class="nav-icon icon-dashboard"></span>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" id="navCapture" onclick="location.href='capture_photo.html'">
+                    <span class="nav-icon icon-capture"></span>
+                    <span>Capture</span>
+                </button>
+                <button class="nav-item" id="navUpload" onclick="location.href='upload_photo.html'">
+                    <span class="nav-icon icon-upload"></span>
+                    <span>Upload</span>
+                </button>
+                <button class="nav-item" id="navHistory" onclick="location.href='history.html'">
+                    <span class="nav-icon icon-history"></span>
+                    <span>History</span>
+                </button>
+            </nav>
+
+            <!-- User Profile -->
+            <div class="user-profile-badge" onclick="location.href='profile.html'" style="cursor: pointer;">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="User Avatar" class="user-avatar" id="headerUserAvatar" onerror="this.src='https://placehold.co/100x100/F4DAFF/794A98?text=JD'">
+                <span class="user-name" id="headerUserName">Jane Doe</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="dashboard-inner">
+            
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+                <div class="welcome-content">
+                    <div class="badge-pill">
+                        <span class="badge-pill-text">EMOTION RECOGNITION</span>
+                    </div>
+                    <div class="welcome-title-box">
+                        <span class="welcome-title-dark">Welcome to </span>
+                        <span class="welcome-title-purple">EmotiScan</span>
+                    </div>
+                    <p class="welcome-description">
+                        Capture a photo or upload an existing image to analyze facial expressions and<br class="hidden-mobile"/>view the detected emotion. You can also review your previous results in History.
+                    </p>
+                </div>
+                
+                <div class="welcome-avatar-graphic">
+                    <div class="avatar-circle-illustration">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9" stroke-width="2.5"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5"></line>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-block">
+                <h2 class="section-header">Quick Actions</h2>
+                <div class="quick-actions-grid">
+                    
+                    <!-- Quick Action 1: Capture -->
+                    <div class="quick-action-card">
+                        <div>
+                            <div class="action-icon-wrapper" style="background: #EDE7F6;">
+                                <img src="icons/quickActions_capture.svg">
+                            </div>
+                            <h3 class="action-title">Capture</h3>
+                            <p class="action-desc">Use your camera to capture a photo and analyze the detected emotion.</p>
+                        </div>
+                        <div class="action-btn-container">
+                            <button class="btn-action btn-action-primary" id="btnCaptureAction">
+                                <img src="icons/quickActionsbtn_capture.svg">
+                                <span>Capture Photo</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action 2: Upload -->
+                    <div class="quick-action-card">
+                        <div>
+                            <div class="action-icon-wrapper" style="background: #FCE7F3;">
+                                <img src="icons/quickActions_upload.svg">
+                            </div>
+                            <h3 class="action-title">Upload</h3>
+                            <p class="action-desc">Upload a photo from your device to analyze the detected emotion.</p>
+                        </div>
+                        <div class="action-btn-container">
+                            <button class="btn-action btn-action-pink" id="btnUploadAction">
+                                <img src="icons/quickActionsbtn_upload.svg">
+                                <span>Upload Photo</span>
+                            </button>
+                            <input type="file" id="fileInputPicker" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- Quick Action 3: History -->
+                    <div class="quick-action-card">
+                        <div>
+                            <div class="action-icon-wrapper" style="background: #EDE7F6;">
+                                <img src="icons/quickActions_history.svg">
+                            </div>
+                            <h3 class="action-title">History</h3>
+                            <p class="action-desc">View your previous emotion recognition results and activity.</p>
+                        </div>
+                        <div class="action-btn-container">
+                            <button class="btn-action btn-action-outline" id="btnHistoryAction">
+                                <img src="icons/quickActionsbtn_history.svg">
+                                <span>View History</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="section-block" style="padding-top: 8px;">
+                <h2 class="section-header">Recent Results</h2>
+                <div class="recent-results-grid">
+                    
+                    <!-- Card 1 -->
+                    <div class="result-card" style="outline: 2px #1E293B solid; outline-offset: -2px;">
+                        <div class="result-img-box">
+                            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80" alt="Result photo" class="result-img" onerror="this.src='https://placehold.co/159x198/F1F5F9/1E293B?text=Neutral'">
+                        </div>
+                        <div class="result-info">
+                            <div class="emotion-badge" style="background: #F1F5F9; color: #1E293B;" data-badge-bg="#F1F5F9" data-dot-color="#64748B" data-outline="#1E293B">NEUTRAL</div>
+                            <span class="result-timestamp">Oct 18, 5:40 PM</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="camera-modal hidden">
+        <div class="camera-card">
+            <h3 style="font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: #111827;">Camera Capture</h3>
+            <video id="cameraStream" class="video-preview" autoplay playsinline></video>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button id="closeCameraBtn" class="btn-action btn-action-outline" style="width: auto;">Cancel</button>
+                <button id="snapPhotoBtn" class="btn-action btn-action-primary" style="width: auto;">Take Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Figma Analysis Result Pop-up Modal (Blurred below navbar) -->
+    <div id="analysisModal" class="analysis-modal-overlay hidden">
+        <div class="analysis-modal-card">
+            
+            <!-- Modal Close Circle Button -->
+            <button id="closeAnalysisBtn" class="analysis-close-btn" aria-label="Close modal">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <!-- Modal Header Title & Time -->
+            <div class="analysis-modal-header">
+                <h2 class="analysis-modal-title">Analysis Result</h2>
+                <div class="analysis-modal-time-row">
+                    <div class="analysis-clock-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <span id="analysisModalTimestamp" class="analysis-modal-timestamp">Today • 10:42 AM</span>
+                </div>
+            </div>
+
+            <!-- Analysis Photo Card with Dynamic Border -->
+            <div id="analysisPhotoCard" class="analysis-photo-card">
+                <div class="analysis-img-wrapper">
+                    <img id="analysisModalImg" class="analysis-modal-img" src="https://placehold.co/404x505" alt="Scanned Result Face" />
+                </div>
+                
+                <div class="analysis-badge-section">
+                    <div id="analysisModalPill" class="analysis-emotion-pill">
+                        <div id="analysisModalDot" class="analysis-dot"></div>
+                        <span id="analysisModalEmotionText" class="analysis-emotion-text">HAPPY</span>
+                    </div>
+                    <span class="analysis-sublabel">EMOTION DETECTED</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Notification Toast Popup -->
+    <div id="toast" class="toast">Action completed</div>
+
+    <!-- External JavaScript -->
+    <script src="script/dashboard.js" defer></script>
+</body>
+</html>

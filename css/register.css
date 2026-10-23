@@ -1,0 +1,467 @@
+/* ==========================================================================
+   1. COLOR PALETTE & RESET
+   ========================================================================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(
+        142deg,
+        #E4C8F5 0%,
+        #F7D2E8 50%,
+        #FBCFE8 100%
+    );
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #161C28;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    padding-bottom: 40px;
+}
+
+/* ==========================================================================
+   2. TOP NAVIGATION HEADER (Aligned with Profile Layout)
+   ========================================================================== */
+.top-header {
+    width: 100%;
+    height: 58px;
+    background: #FAF6EE;
+    border-bottom: 1px solid #EADBCE;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    padding: 0 45px !important; 
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.top-header-inner {
+    width: 100%;
+    max-width: 100% !important; 
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+    gap: 20px;
+    box-sizing: border-box;
+}
+
+.logo-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    flex-shrink: 0;
+    width: 180px; /* Locked width so navbar stays perfectly aligned */
+}
+
+.header-logo,
+.logo-img {
+    height: 75px; 
+    width: auto;  
+    object-fit: contain;
+    display: block;
+}
+
+/* ==========================================================================
+   3. MAIN CONTAINER & REGISTRATION CARD
+   ========================================================================== */
+
+.main-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 32px;
+}
+
+.register-card-container {
+    width: 540px;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.register-card {
+    width: 100%;
+    background: #FFFFFF;
+    border-radius: 12px;
+    outline: 1px solid #FFD9E4;
+    outline-offset: -1px;
+    box-shadow:
+        0 2px 8px -1px rgba(47, 53, 66, 0.04),
+        0 4px 20px -2px rgba(196, 144, 228, 0.16);
+    padding: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: relative;
+}
+
+/* Card Header */
+
+.card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 100%;
+}
+
+.icon-badge {
+    width: 48px;
+    height: 48px;
+    padding: 10px 0;
+    background: rgba(244, 218, 255, 0.40);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    outline: 1px solid rgba(207, 195, 208, 0.30);
+    outline-offset: -1px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.icon-badge svg {
+    width: 22px;
+    height: 22px;
+    fill: #794A98;
+}
+
+.card-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 32px;
+    color: #161C28;
+    text-align: center;
+}
+
+.card-subtitle {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 20px;
+    color: #4C444F;
+    text-align: center;
+}
+
+/* ==========================================================================
+   4. FORM FIELDS & TYPOGRAPHY
+   ========================================================================== */
+
+.form-fields-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.form-row-2col {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+}
+
+.form-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    flex: 1;
+}
+
+.field-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.field-label {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.24px;
+    color: #161C28;
+}
+
+.field-sublabel {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 14px;
+    letter-spacing: 0.33px;
+    color: #7D7480;
+}
+
+.field-sublabel svg {
+    width: 11px;
+    height: 12px;
+    fill: #7D7480;
+}
+
+/* ==========================================================================
+   5. INPUT CONTROLS
+   ========================================================================== */
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    background: #FFFFFF;
+    border-radius: 8px;
+    outline: 1px solid rgba(207, 195, 208, 0.40);
+    outline-offset: -1px;
+    transition: all 0.2s ease;
+}
+
+.input-wrapper img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    position: absolute;
+    right: 12px;
+    z-index: 1;
+}
+
+.input-wrapper:focus-within {
+    outline: 1.5px solid #C490E4;
+    box-shadow: 0 0 0 3px rgba(196, 144, 228, 0.2);
+}
+
+.custom-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 12px 16px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 24px;
+    color: #161C28;
+    outline: none;
+}
+
+.custom-input::placeholder {
+    color: rgba(125, 116, 128, 0.70);
+    opacity: 1;
+}
+
+.input-wrapper.has-left-icon .custom-input {
+    padding-left: 36px;
+}
+
+.input-wrapper.has-right-icon .custom-input {
+    padding-right: 42px;
+}
+
+.input-icon-left {
+    position: absolute;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.input-icon-right {
+    position: absolute;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.email-icon {
+    pointer-events: none;
+}
+
+.password-field {
+    padding-bottom: 8px;
+}
+
+/* ==========================================================================
+   6. BUTTONS & ACTIONS
+   ========================================================================== */
+
+.btn-submit {
+    width: 100%;
+    padding: 12px 24px;
+    background: linear-gradient(175deg, #C490E4 0%, #FDA9C6 100%);
+    box-shadow: 0 4px 14px rgba(196, 144, 228, 0.38);
+    border-radius: 9999px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    margin-top: 8px;
+}
+
+.btn-submit:hover {
+    opacity: 0.95;
+    box-shadow: 0 6px 18px rgba(196, 144, 228, 0.50);
+    transform: translateY(-1px);
+}
+
+.btn-submit:active {
+    transform: translateY(0);
+}
+
+.btn-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.14px;
+    color: #FFFFFF;
+}
+
+.btn-icon {
+    width: 12px;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon svg {
+    width: 12px;
+    height: 12px;
+    fill: #FFFFFF;
+}
+
+/* ==========================================================================
+   7. DIVIDER & LOGIN PROMPT
+   ========================================================================== */
+
+.divider-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.divider-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(207, 195, 208, 0.30);
+}
+
+.divider-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 14px;
+    letter-spacing: 0.33px;
+    color: #7D7480;
+}
+
+.login-prompt {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+}
+
+.login-prompt-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 20px;
+    color: #4C444F;
+}
+
+.login-link {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.14px;
+    color: #794A98;
+    text-decoration: underline;
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+.login-link:hover {
+    color: #9B63BD;
+}
+
+/* ==========================================================================
+   8. TOAST NOTIFICATION
+   ========================================================================== */
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #161C28;
+    color: #FFFFFF;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 3000;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   9. MOBILE RESPONSIVENESS
+   ========================================================================== */
+
+@media (max-width: 640px) {
+    .top-header {
+        height: auto;
+        min-height: 56px;
+        padding: 12px 16px !important;
+    }
+
+    .header-logo {
+        height: 34px;
+        max-width: 140px;
+    }
+
+    .register-card {
+        padding: 24px 20px;
+    }
+
+    .form-row-2col {
+        flex-direction: column;
+        gap: 16px;
+    }
+}

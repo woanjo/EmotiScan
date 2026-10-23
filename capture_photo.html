@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture Photo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/capture_photo.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="top-header">
+        <div class="top-header-inner">
+            <a href="dashboard.html" class="logo-box">
+                <img class="header-logo" src="emotiScan_logo.png" alt="EmotiScan Logo" />
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="nav-links" aria-label="Main navigation">
+                <button class="nav-item" id="navDashboard" onclick="location.href='dashboard.html'">
+                    <span class="nav-icon icon-dashboard"></span>
+                    <span>Dashboard</span>
+                </button>
+                <!-- Capture is active -->
+                <button class="nav-item active" id="navCapture" onclick="location.href='capture_photo.html'" aria-current="page">
+                    <span class="nav-icon icon-capture"></span>
+                    <span>Capture</span>
+                </button>
+                <button class="nav-item" id="navUpload" onclick="location.href='upload_photo.html'">
+                    <span class="nav-icon icon-upload"></span>
+                    <span>Upload</span>
+                </button>
+                <button class="nav-item" id="navHistory" onclick="location.href='history.html'">
+                    <span class="nav-icon icon-history"></span>
+                    <span>History</span>
+                </button>
+            </nav>
+
+            <!-- User Profile -->
+            <div class="user-profile-badge" onclick="location.href='profile.html'" style="cursor: pointer;">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="User Avatar" class="user-avatar" id="headerUserAvatar" onerror="this.src='https://placehold.co/100x100/F4DAFF/794A98?text=JD'">
+                <span class="user-name" id="headerUserName">Jane Doe</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Page -->
+    <main class="page-container">
+        <div class="content-wrapper">
+
+            <!-- Primary Capture Card -->
+            <div class="main-card">
+
+                <div class="card-header-block">
+                    <div class="pill-badge">
+                        <div class="pill-dot"></div>
+                        <span class="pill-text">Observation Session #842</span>
+                    </div>
+
+                    <h1 class="card-title">Live Facial Scan</h1>
+
+                    <p class="card-description">
+                        Position your face clearly within the oval guide for optimal emotion recognition.
+                    </p>
+                </div>
+
+                <!-- Camera Viewport -->
+                <div class="camera-wrapper">
+                    <div class="camera-status-badge" id="cameraStatusBadge">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="statusText">Camera Active  •  Face Detected in Frame</span>
+                    </div>
+
+                    <div class="face-guide-overlay" id="faceGuide"></div>
+
+                    <!-- Live Camera Stream -->
+                    <video
+                        id="webcamVideo"
+                        class="camera-video"
+                        autoplay
+                        playsinline
+                        muted
+                    ></video>
+
+                    <!-- Captured Photo Canvas -->
+                    <canvas
+                        id="photoCanvas"
+                        class="camera-canvas hidden"
+                    ></canvas>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="action-buttons-row">
+
+                    <button class="btn btn-capture" id="btnCapture">
+                        <img src="icons/navbar_capture.svg" alt="" class="capture-icon-btn">
+                        <span id="captureBtnLabel">Capture Photo</span>
+                    </button>
+
+                    <button class="btn btn-retake" id="btnRetake">
+                        <img src="icons/retake_icon.svg" alt="" class="retake-icon-btn">
+                        <span>Retake Photo</span>
+                    </button>
+
+                    <button class="btn btn-analyze" id="btnAnalyze">
+                        <img src="icons/analyze_icon.svg" alt="" class="analyze-icon-btn">
+                        <span id="analyzeBtnLabel">Analyze Photo</span>
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- Detected Emotion Section -->
+            <section
+                class="detected-emotion-section hidden"
+                id="detectedEmotionSection"
+            >
+
+                <div class="card-header-block">
+                    <div class="pill-badge">
+                        <div class="pill-dot"></div>
+                        <span class="pill-text">Emotion Analysis Complete</span>
+                    </div>
+
+                    <h2 class="card-title">Detected Emotion</h2>
+                </div>
+
+                <!-- Emotion Categories -->
+                <div class="emotion-legend-grid">
+                    <div class="legend-pill pill-happy">Happiness</div>
+                    <div class="legend-pill pill-neutral">Neutral</div>
+                    <div class="legend-pill pill-surprise">Surprise</div>
+                    <div class="legend-pill pill-sadness">Sadness</div>
+                    <div class="legend-pill pill-fear">Fear</div>
+                    <div class="legend-pill pill-anger">Anger</div>
+                </div>
+
+                <!-- Analysis Result -->
+                <div class="result-box-card">
+                    <img
+                        id="resultPhoto"
+                        src=""
+                        alt="Captured Analysis Photo"
+                        class="captured-result-img"
+                    >
+
+                    <div id="resultEmotionBadge" class="emotion-result-badge">
+                        ---
+                    </div>
+                </div>
+
+                <!-- Capture Another Photo -->
+                <button
+                    class="btn btn-primary"
+                    id="btnCaptureAnother"
+                    style="max-width: 280px; width: 100%;"
+                >
+                    <span>Capture Another Photo</span>
+                </button>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">Action completed</div>
+
+    <!-- External JavaScript -->
+    <script src="js/capture-photo.js"></script>
+
+</body>
+</html>

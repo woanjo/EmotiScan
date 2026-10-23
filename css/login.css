@@ -1,0 +1,1036 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: linear-gradient(
+        131deg,
+        #E4C8F5 0%,
+        #F7D2E8 50%,
+        #FBCFE8 100%
+    );
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    color: #111827;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+/* ========================================
+   2. NAVBAR (Aligned with Profile Layout)
+======================================== */
+
+.navbar {
+    width: 100%;
+    height: 58px;
+    background: #FAF6EE;
+    border-bottom: 1px solid #EADBCE;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 45px !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 2000;
+    box-sizing: border-box;
+}
+
+.navbar-content {
+    width: 100%;
+    max-width: 100% !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.logo-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    flex-shrink: 0;
+    width: 180px; /* Locked width to keep navbar alignment uniform */
+}
+
+.logo {
+    height: 75px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+
+/* ========================================
+   3. MAIN PAGE LAYOUT
+======================================== */
+
+.main-container {
+    width: 100%;
+    max-width: 1520px;
+    margin-top: 58px;
+    padding: 56px 40px 80px;
+    display: flex;
+    justify-content: center;
+}
+
+.content-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 40px;
+}
+
+.left-column {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.right-column {
+    width: 472px;
+    flex-shrink: 0;
+}
+
+
+/* ========================================
+   4. HERO SECTION
+======================================== */
+
+.badge {
+    padding: 6px 16px;
+    background: #F1E6F9;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 9999px;
+    border: 1px solid rgba(216, 180, 248, 0.40);
+    color: #7A49A5;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    margin-bottom: 16px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.hero-title {
+    font-family: 'Liberation Serif', serif;
+    font-size: 60px;
+    font-weight: 700;
+    line-height: 60px;
+    margin-bottom: 16px;
+}
+
+.hero-title span:first-child {
+    color: #111827;
+}
+
+.hero-title span:last-child {
+    color: #794A98;
+}
+
+.hero-desc {
+    max-width: 672px;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 26px;
+    color: #4B5563;
+    margin-bottom: 32px;
+}
+
+.hero-desc strong {
+    color: #111827;
+}
+
+
+/* ========================================
+   5. QUICK START GUIDE
+======================================== */
+
+.quick-start-section {
+    width: 100%;
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.qs-badge {
+    padding: 4px 14px;
+    background: rgba(235, 216, 255, 0.60);
+    border-radius: 9999px;
+    border: 1px solid rgba(216, 180, 248, 0.40);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    margin-bottom: 10px;
+}
+
+.qs-badge-icon {
+    width: 12.83px;
+    height: 12.83px;
+    background: #794A98;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.qs-badge-text {
+    color: #794A98;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.60px;
+}
+
+.qs-title {
+    color: #141416;
+    font-size: 24px;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    line-height: 32px;
+    margin-bottom: 6px;
+}
+
+.qs-sub {
+    color: #4B5563;
+    font-size: 14px;
+    line-height: 20px;
+    margin-bottom: 20px;
+}
+
+.steps-grid {
+    width: 100%;
+    display: flex;
+    gap: 14px;
+}
+
+.step-card {
+    flex: 1;
+    min-width: 0;
+    padding: 16px;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    border: 1px solid #F0E6F6;
+    display: flex;
+    flex-direction: column;
+}
+
+.step-num {
+    width: 28px;
+    height: 28px;
+    background: rgba(235, 216, 255, 0.60);
+    border-radius: 9999px;
+    border: 1px solid rgba(216, 180, 248, 0.40);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #794A98;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.step-card.alt .step-num {
+    background: #FCE8EF;
+    border-color: rgba(248, 165, 194, 0.40);
+    color: #70324B;
+}
+
+.step-heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.step-bullet {
+    width: 13.33px;
+    height: 13.33px;
+    background: #794A98;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.step-card.alt .step-bullet {
+    background: #8C4963;
+}
+
+.step-heading span {
+    color: #141416;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+}
+
+.step-text {
+    color: #4B5563;
+    font-size: 14px;
+    line-height: 22.75px;
+}
+
+
+/* ========================================
+   6. LOGIN CARD
+======================================== */
+
+.login-card {
+    width: 100%;
+    padding: 32px;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #F0E6F6;
+    box-shadow:
+        0 2px 6px -1px rgba(47, 53, 66, 0.04),
+        0 4px 20px -2px rgba(196, 144, 228, 0.16);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.login-icon-box {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(
+        135deg,
+        #F1E6F9 0%,
+        #FCE8EF 100%
+    );
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    border: 1px solid rgba(216, 180, 248, 0.30);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+
+.login-icon-inner {
+    width: 16px;
+    height: 21px;
+    background: #794A98;
+    border-radius: 2px;
+}
+
+.login-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.login-title {
+    color: #111827;
+    font-size: 24px;
+    font-family: 'Liberation Serif', serif;
+    font-weight: 700;
+    line-height: 32px;
+}
+
+.login-subtitle {
+    color: #4B5563;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+
+/* ========================================
+   7. FORMS AND INPUT FIELDS
+======================================== */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.login-username-group {
+    margin-bottom: 16px;
+}
+
+.login-password-group {
+    margin-bottom: 24px;
+}
+
+.form-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+.form-label {
+    color: #3B2B48;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.60px;
+}
+
+.forgot-link {
+    color: #794A98;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+.forgot-link-icon {
+    width: 11.5px;
+    height: 6px;
+    background: #794A98;
+    display: inline-block;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    position: absolute;
+    left: 12px;
+    z-index: 1;
+}
+
+.input-field {
+    width: 100%;
+    min-width: 0;
+    padding: 13px 44px;
+    background: rgba(250, 246, 238, 0.40);
+    border-radius: 12px;
+    border: 1px solid rgba(216, 180, 248, 0.60);
+    font-size: 15px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #111827;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.input-field:focus {
+    border-color: #794A98;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(121, 74, 152, 0.1);
+}
+
+.input-field::placeholder {
+    color: #9CA3AF;
+}
+
+.input-icon-left {
+    position: absolute;
+    left: 16px;
+    width: 15px;
+    height: 15px;
+    background: #7D7480;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+.password-icon-left {
+    position: absolute;
+    left: 17px;
+    width: 12px;
+    height: 15.75px;
+    background: #9CA3AF;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #9CA3AF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password:hover {
+    color: #794A98;
+}
+
+.toggle-password svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+
+/* ========================================
+   8. PRIMARY BUTTON
+======================================== */
+
+.btn-primary {
+    width: 100%;
+    padding: 12px 24px;
+    background: linear-gradient(
+        90deg,
+        #C490E4 0%,
+        #F8A5C2 100%
+    );
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 9999px;
+    border: none;
+    color: white;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    line-height: 20px;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-primary:active {
+    transform: scale(0.99);
+}
+
+.btn-primary:focus-visible,
+.modal-close:focus-visible,
+.toggle-password:focus-visible {
+    outline: 2px solid #794A98;
+    outline-offset: 3px;
+}
+
+.button-icon {
+    width: 12px;
+    height: 12px;
+    background: white;
+    display: inline-block;
+}
+
+
+/* ========================================
+   9. LOGIN CARD FOOTER
+======================================== */
+
+.card-footer {
+    padding-top: 20px;
+    border-top: 1px solid #F0E6F6;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 12px;
+}
+
+.card-footer span:first-child {
+    color: #4B5563;
+}
+
+.card-footer a {
+    color: #794A98;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.card-footer a:hover {
+    text-decoration: underline;
+}
+
+
+/* ========================================
+   10. MODAL OVERLAY
+======================================== */
+
+.modal-overlay {
+    position: fixed;
+    top: 58px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 58px);
+    height: calc(100dvh - 58px);
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.40);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    z-index: 999;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-box {
+    width: 440px;
+    max-width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 32px;
+    background: white;
+    border-radius: 24px;
+    border: 1px solid #F0E6F6;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 21px;
+    right: 21px;
+    width: 32px;
+    height: 32px;
+    border-radius: 9999px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #7D7480;
+    font-size: 16px;
+    z-index: 1;
+}
+
+.modal-close:hover {
+    background: #F3F0F6;
+}
+
+
+/* ========================================
+   11. MODAL HEADER
+======================================== */
+
+.modal-header-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 7px;
+    width: 100%;
+    padding-top: 4px;
+}
+
+.modal-icon-badge {
+    width: 56px;
+    min-height: 48px;
+    padding: 12px 0;
+    background: linear-gradient(
+        45deg,
+        #F4DAFF 0%,
+        #FFD9E4 100%
+    );
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    border: 1px solid #F0E6F6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-email-icon {
+    width: 23.33px;
+    height: 23.33px;
+    background: #794A98;
+    border-radius: 4px;
+}
+
+.modal-code-icon {
+    width: 24.5px;
+    height: 21px;
+    background: #794A98;
+    border-radius: 3px;
+}
+
+.modal-title {
+    color: #161C28;
+    font-size: 24px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    line-height: 32px;
+}
+
+.modal-desc {
+    max-width: 340px;
+    color: #4C444F;
+    font-size: 13px;
+    line-height: 21.13px;
+}
+
+
+/* ========================================
+   12. PASSWORD RECOVERY EMAIL FORM
+======================================== */
+
+.modal-email-group {
+    gap: 8px;
+}
+
+.modal-label {
+    text-transform: none;
+    font-size: 14px;
+    color: #161C28;
+    letter-spacing: normal;
+}
+
+.modal-input-icon {
+    top: 17px;
+}
+
+.modal-input {
+    background: white;
+}
+
+.modal-input:focus {
+    background: white;
+}
+
+.modal-label-small {
+    text-transform: none;
+    font-size: 12px;
+    color: #161C28;
+    letter-spacing: normal;
+}
+
+
+/* ========================================
+   13. VERIFICATION CODE INPUTS
+======================================== */
+
+.code-inputs {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 0 4px;
+}
+
+.code-digit {
+    width: 48px;
+    min-width: 0;
+    height: 56px;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    border: 1px solid #F0E6F6;
+    text-align: center;
+    font-size: 20px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    color: #161C28;
+    outline: none;
+}
+
+.code-digit:focus {
+    border-color: #2563EB;
+    background: #F1F3FF;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        0 0 0 1px #2563EB;
+}
+
+
+/* ========================================
+   14. RESEND VERIFICATION CODE
+======================================== */
+
+.resend-row {
+    width: 100%;
+    text-align: center;
+    font-size: 13px;
+    color: #4C444F;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.resend-link {
+    color: #794A98;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.resend-link:hover {
+    text-decoration: underline;
+}
+
+.resend-timer {
+    color: #7D7480;
+    font-size: 12px;
+}
+
+
+/* ========================================
+   15. NEW PASSWORD FORM
+======================================== */
+
+.new-password-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.new-password-fields .form-group {
+    gap: 6px;
+}
+
+
+/* ========================================
+   16. PASSWORD REMINDER
+======================================== */
+
+.password-reminder-box {
+    width: 100%;
+    padding: 12px;
+    background: #F1F3FF;
+    border-radius: 12px;
+    border: 1px solid #F0E6F6;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.reminder-bullet {
+    width: 15px;
+    height: 15px;
+    background: #794A98;
+    border-radius: 3px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.reminder-title {
+    color: #794A98;
+    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    line-height: 14px;
+    letter-spacing: 0.33px;
+    margin-bottom: 4px;
+}
+
+.reminder-desc {
+    color: #4C444F;
+    font-size: 12px;
+    line-height: 19.5px;
+}
+
+
+/* ========================================
+   17. MODAL FOOTER
+======================================== */
+
+.modal-footer-link {
+    width: 100%;
+    padding-top: 16px;
+    border-top: 1px solid #F0E6F6;
+    text-align: center;
+    font-size: 13px;
+    color: #4C444F;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.modal-footer-link a {
+    color: #161C28;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-footer-link a:hover {
+    text-decoration: underline;
+}
+
+.modal-divider {
+    height: 1px;
+    border-top: 1px solid #F0E6F6;
+    width: 100%;
+}
+
+
+/* ========================================
+   18. RESPONSIVE DESIGN - TABLETS
+======================================== */
+
+@media (max-width: 1100px) {
+
+    .main-container {
+        padding: 40px 28px 60px;
+    }
+
+    .content-wrapper {
+        gap: 28px;
+    }
+
+    .right-column {
+        width: 420px;
+    }
+
+    .hero-title {
+        font-size: 48px;
+        line-height: 52px;
+    }
+
+    .steps-grid {
+        flex-direction: column;
+    }
+
+    .step-card {
+        width: 100%;
+    }
+
+    .step-heading span {
+        font-size: 13px;
+    }
+
+    .step-text {
+        line-height: 22px;
+    }
+}
+
+
+/* ========================================
+   19. RESPONSIVE DESIGN - MOBILE
+======================================== */
+
+@media (max-width: 760px) {
+
+    .navbar {
+        height: 56px;
+        padding: 0 16px !important;
+    }
+
+    .logo {
+        height: 34px;
+    }
+
+    .main-container {
+        margin-top: 56px;
+        padding: 32px 20px 48px;
+    }
+
+    .content-wrapper {
+        flex-direction: column;
+        gap: 36px;
+    }
+
+    .left-column {
+        width: 100%;
+    }
+
+    .right-column {
+        width: 100%;
+        max-width: 472px;
+        margin: 0 auto;
+    }
+
+    .hero-title {
+        font-size: clamp(36px, 8vw, 48px);
+        line-height: 1.1;
+    }
+
+    .hero-desc {
+        font-size: 14px;
+        line-height: 24px;
+    }
+
+    .qs-title {
+        font-size: 22px;
+    }
+
+    .steps-grid {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .step-card {
+        padding: 18px;
+    }
+
+    .login-card {
+        padding: 26px 22px;
+        gap: 22px;
+    }
+
+    .modal-overlay {
+        top: 56px;
+        height: calc(100vh - 56px);
+        height: calc(100dvh - 56px);
+        padding: 16px;
+    }
+
+    .modal-box {
+        padding: 28px 22px;
+        gap: 20px;
+        border-radius: 20px;
+    }
+
+    .modal-title {
+        font-size: 22px;
+        line-height: 29px;
+    }
+
+    .modal-close {
+        top: 14px;
+        right: 14px;
+    }
+}
