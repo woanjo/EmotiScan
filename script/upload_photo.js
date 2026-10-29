@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleFileSelection(file) {
         const validTypes = [
             'image/jpeg',
+            'image/jpg',
             'image/png',
             'image/webp'
         ];
@@ -189,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!validTypes.includes(file.type)) {
             showToast(
-                'Invalid file format. Please upload JPG, PNG, or WEBP.',
+                'Invalid file format. Please upload JPG, JPG, PNG, or WEBP.',
                 true
             );
 
@@ -408,20 +409,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================
 
     if (btnAnalyze) {
-        btnAnalyze.addEventListener('click', () => {
+        btnAnalyze.addEventListener('click', async () => {
             if (isAnalyzing) return;
 
-            if (!selectedFile || !imageBase64) {
-                showToast(
-                    'Please select or drop an image first.',
-                    true
-                );
+            if (!selectedFile) {
+                showToast('Please select an image first.', true);
                 return;
             }
 
             isAnalyzing = true;
-
-            // Show loading state.
             btnAnalyze.disabled = true;
 
             if (analyzeIcon) {
@@ -437,42 +433,82 @@ document.addEventListener('DOMContentLoaded', () => {
                 analyzeLabel.textContent = 'Analyzing...';
             }
 
-            // DEMO ONLY:
-            // Replace this random selection with the emotion
-            // returned by your real model or backend API.
-            setTimeout(() => {
-                // Do not display a result if the image was cleared.
-                if (!selectedFile || !imageBase64) {
-                    isAnalyzing = false;
+            try {
+                // Send the selected photo to the Flask backend.
+                const formData = new FormData();
+                formData.append('image', selectedFile);
 
-                    if (btnAnalyze) {
-                        btnAnalyze.disabled = false;
-                    }
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
 
-                    return;
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(
+                        data.message || 'Unable to analyze the image.'
+                    );
                 }
 
-                const detected =
-                    emotionsConfig[
-                        Math.floor(
-                            Math.random() * emotionsConfig.length
-                        )
-                    ];
+                // Convert the backend emotion into the UI label.
+                const emotionNames = {
+                    happy: 'HAPPINESS',
+                    angry: 'ANGER',
+                    disgust: 'DISGUST',
+                    fear: 'FEAR',
+                    neutral: 'NEUTRALITY',
+                    sad: 'SADNESS',
+                };
 
-                // Display the uploaded image in the result card.
+                const detectedName =
+                    emotionNames[String(data.emotion).toLowerCase()];
+
+                const detected = emotionsConfig.find(
+                    item => item.name === detectedName
+                );
+
+                if (!detected) {
+                    throw new Error(
+                        'The backend returned an unsupported emotion.'
+                    );
+                }
+
+                // Show the uploaded photo and actual backend result.
                 if (resultPhoto) {
                     resultPhoto.src = imageBase64;
                 }
 
-                // Display the emotion and highlight its legend item.
                 displayEmotion(detected);
 
-                // Show the reference-style result screen.
                 if (detectedEmotionSection) {
                     detectedEmotionSection.classList.remove('hidden');
+                    detectedEmotionSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
                 }
 
-                // Restore the Analyze button.
+                const score = Number(data.score);
+
+                if (Number.isFinite(score)) {
+                    showToast(
+                        `${detected.name} detected. Model score: ${score.toFixed(2)}%.`
+                    );
+                } else {
+                    showToast(`${detected.name} detected successfully!`);
+                }
+
+            } catch (error) {
+                console.error('Emotion analysis error:', error);
+
+                showToast(
+                    error.message ||
+                    'Cannot connect to the backend. Check that Flask is running.',
+                    true
+                );
+
+            } finally {
                 isAnalyzing = false;
                 btnAnalyze.disabled = false;
 
@@ -482,22 +518,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (analyzeSpinner) {
                     analyzeSpinner.style.display = 'none';
+                    analyzeSpinner.classList.remove('spinner');
                 }
 
                 if (analyzeLabel) {
                     analyzeLabel.textContent = 'Analyze Emotion';
                 }
-
-                // Scroll to the result.
-                if (detectedEmotionSection) {
-                    detectedEmotionSection.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                }
-
-                showToast('Emotion analysis complete!');
-            }, 1200);
+            }
         });
     }
 
