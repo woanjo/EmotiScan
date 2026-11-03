@@ -119,14 +119,11 @@
             </div>
 
             <!-- Detected Emotion Section -->
-            <section
-                class="detected-emotion-section hidden"
-                id="detectedEmotionSection"
-            >
+            <section class="detected-emotion-section hidden" id="detectedEmotionSection">
 
                 <div class="card-header-block">
-                    <div class="pill-badge">
-                        <div class="pill-dot"></div>
+                    <div class="pill-badge result-status">
+                        <span class="pill-dot"></span>
                         <span class="pill-text">Emotion Analysis Complete</span>
                     </div>
 
@@ -135,34 +132,58 @@
 
                 <!-- Emotion Categories -->
                 <div class="emotion-legend-grid">
-                    <div class="legend-pill pill-happy">Happiness</div>
-                    <div class="legend-pill pill-neutral">Neutral</div>
-                    <div class="legend-pill pill-surprise">Surprise</div>
-                    <div class="legend-pill pill-sadness">Sadness</div>
-                    <div class="legend-pill pill-fear">Fear</div>
-                    <div class="legend-pill pill-anger">Anger</div>
+                    <div class="legend-pill pill-happy active" data-emotion="HAPPINESS">
+                        <span class="legend-dot"></span> Happiness
+                    </div>
+                    <div class="legend-pill pill-anger" data-emotion="ANGER">
+                        <span class="legend-dot"></span> Anger
+                    </div>
+                    <div class="legend-pill pill-disgust" data-emotion="DISGUST">
+                        <span class="legend-dot"></span> Disgust
+                    </div>
+                    <div class="legend-pill pill-fear" data-emotion="FEAR">
+                        <span class="legend-dot"></span> Fear
+                    </div>
+                    <div class="legend-pill pill-neutral" data-emotion="NEUTRALITY">
+                        <span class="legend-dot"></span> Neutrality
+                    </div>
+                    <div class="legend-pill pill-sadness" data-emotion="SADNESS">
+                        <span class="legend-dot"></span> Sadness
+                    </div>
                 </div>
 
                 <!-- Analysis Result -->
                 <div class="result-box-card">
-                    <img
-                        id="resultPhoto"
-                        src=""
-                        alt="Captured Analysis Photo"
-                        class="captured-result-img"
-                    >
+                    <div class="result-image-frame">
+                        <img
+                            id="resultPhoto"
+                            src=""
+                            alt="Captured Analysis Photo"
+                            class="captured-result-img"
+                        >
+                    </div>
 
                     <div id="resultEmotionBadge" class="emotion-result-badge">
-                        ---
+                        <span class="result-dot"></span>
+                        <span id="resultEmotionText">HAPPINESS</span>
                     </div>
+
+                     <p class="notice-placeholder">EMOTION DETECTED</p>
                 </div>
 
                 <!-- Capture Another Photo -->
                 <button
-                    class="btn btn-primary"
+                    class="upload-btn-inner result-upload-btn"
                     id="btnCaptureAnother"
-                    style="max-width: 280px; width: 100%;"
+                    type="button"
                 >
+                    <svg width="16" height="16" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="6" width="18" height="15" rx="2"></rect>
+                        <path d="M8 6l1.5-3h5L16 6"></path>
+                        <circle cx="12" cy="13" r="3"></circle>
+                    </svg>
                     <span>Capture Another Photo</span>
                 </button>
 
@@ -175,7 +196,7 @@
     <div id="toast" class="toast">Action completed</div>
 
     <!-- External JavaScript -->
-    <script src="js/capture-photo.js"></script>
+    <script src="script/capture_photo.js"></script>
 
 </body>
 </html>

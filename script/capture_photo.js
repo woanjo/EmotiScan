@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     // ========================================
     // UI REFERENCES
@@ -205,54 +204,129 @@ document.addEventListener('DOMContentLoaded', () => {
     // ANALYZE EMOTION
     // ========================================
 
-    function analyzeEmotion() {
+    async function analyzeEmotion() {
         if (!capturedDataUrl) {
             showToast('Please capture a photo first.', true);
             return;
         }
 
-        // Prevent repeated analysis clicks
         if (btnAnalyze.disabled) {
             return;
         }
 
-        // Display loading state
+        // Show loading state
         btnAnalyze.disabled = true;
+        if (analyzeSpinner) {
         analyzeSpinner.style.display = 'inline-block';
+    }
         analyzeBtnLabel.textContent = 'Analyzing...';
 
-        setTimeout(() => {
-            // Simulated emotion detection.
-            // This randomly selects an emotion and does not
-            // perform actual facial emotion recognition.
-            const detected =
-                emotionsConfig[
-                    Math.floor(Math.random() * emotionsConfig.length)
-                ];
+        try {
+            // Convert the captured photo into a file.
+            const photoBlob = await fetch(capturedDataUrl)
+                .then(response => response.blob());
 
-            // Display captured photo
+            const photoFile = new File(
+                [photoBlob],
+                'captured_photo.png',
+                { type: 'image/png' }
+            );
+
+            // Send the photo to the Flask backend.
+            const formData = new FormData();
+            formData.append('image', photoFile);
+
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
+            // Safely read the backend response.
+            const responseText = await response.text();
+            let data;
+
+            try {
+                data = JSON.parse(responseText);
+            } catch (error) {
+                console.error('Invalid backend response:', responseText);
+                throw new Error(
+                    `Invalid backend response. HTTP status: ${response.status}`
+                );
+            }
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.message || 'Unable to analyze the captured photo.'
+                );
+            }
+
+            // Match DeepFace emotion names with the existing UI.
+            const emotionNames = {
+                happy: 'HAPPINESS',
+                angry: 'ANGER',
+                disgust: 'DISGUST',
+                fear: 'FEAR',
+                neutral: 'NEUTRAL',
+                sad: 'SADNESS',
+                surprise: 'SURPRISE'
+            };
+
+            const detectedName =
+                emotionNames[String(data.emotion).toLowerCase()];
+
+            if (!detectedName) {
+                throw new Error('Unknown emotion returned by the backend.');
+            }
+
+            // Display the captured photo.
             resultPhoto.src = capturedDataUrl;
 
-            // Display detected emotion
-            resultEmotionBadge.textContent = detected.name;
-            resultEmotionBadge.style.background = detected.color;
-            resultEmotionBadge.style.color = detected.textColor;
+            // Find the matching emotion design.
+            const detected = emotionsConfig.find(
+                item => item.name === detectedName
+            );
 
-            // Show the results section
+            if (detected) {
+                resultEmotionBadge.textContent = detected.name;
+                resultEmotionBadge.style.background = detected.color;
+                resultEmotionBadge.style.color = detected.textColor;
+            } else {
+                // Fallback for DISGUST, which is not in the current legend.
+                resultEmotionBadge.textContent = detectedName;
+                resultEmotionBadge.style.background = '#FEE2E2';
+                resultEmotionBadge.style.color = '#B91C1C';
+            }
+
+            // Show the model score if the backend provides it.
+            if (data.score !== undefined && Number.isFinite(Number(data.score))) {
+                resultEmotionBadge.textContent +=
+                    ` (${Number(data.score).toFixed(2)}%)`;
+            }
+
+            // Display the result section.
             detectedEmotionSection.classList.remove('hidden');
 
-            // Reset loading state
-            btnAnalyze.disabled = false;
-            analyzeSpinner.style.display = 'none';
-            analyzeBtnLabel.textContent = 'Analyze Emotion';
-
-            // Scroll to the results
             detectedEmotionSection.scrollIntoView({
                 behavior: 'smooth'
             });
 
             showToast('Emotion analysis complete!');
-        }, 1500);
+
+        } catch (error) {
+            console.error('Emotion analysis error:', error);
+            showToast(
+                error.message || 'Unable to connect to the backend.',
+                true
+            );
+
+        } finally {
+            // Restore the Analyze button.
+            btnAnalyze.disabled = false;
+            if (analyzeSpinner) {
+            analyzeSpinner.style.display = 'none';
+        }
+            analyzeBtnLabel.textContent = 'Analyze Photo';
+        }
     }
 
     // ========================================
@@ -263,7 +337,9 @@ document.addEventListener('DOMContentLoaded', () => {
         detectedEmotionSection.classList.add('hidden');
 
         resetToCameraPreview();
-
+        if (analyzeSpinner) {
+            analyzeSpinner.style.display = 'none';
+        }
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
