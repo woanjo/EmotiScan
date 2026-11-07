@@ -108,20 +108,36 @@ def analyze_emotion():
 
             result = result[0]
 
-        # Get emotion scores
+        # Get emotion scores from DeepFace
         emotions = result.get("emotion", {})
 
-        # Get the most dominant emotion
-        dominant_emotion = result.get(
-            "dominant_emotion",
-            "unknown"
+        # EmotiScan supports only these six emotions.
+        supported_emotions = [
+            "happy",
+            "angry",
+            "disgust",
+            "fear",
+            "neutral",
+            "sad"
+        ]
+
+        # Keep only the six supported emotions.
+        filtered_emotions = {
+            emotion: float(emotions.get(emotion, 0))
+            for emotion in supported_emotions
+        }
+
+        # Select the emotion with the highest score.
+        dominant_emotion = max(
+            filtered_emotions,
+            key=filtered_emotions.get
         )
 
-        # Get the score for the dominant emotion
-        emotion_score = emotions.get(
-            dominant_emotion,
-            0
-        )
+        # Get its confidence score.
+        emotion_score = filtered_emotions[dominant_emotion]
+
+        print("EMOTISCAN EMOTION SCORES:", filtered_emotions)
+        print("EMOTISCAN DETECTED EMOTION:", dominant_emotion)
 
         return jsonify({
             "success": True,

@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const detectedEmotionSection = document.getElementById('detectedEmotionSection');
     const resultPhoto = document.getElementById('resultPhoto');
-    const resultEmotionBadge = document.getElementById('resultEmotionBadge');
+    const resultEmotionText = document.getElementById('resultEmotionText');
     const toast = document.getElementById('toast');
 
     // ========================================
@@ -165,38 +165,32 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             name: 'HAPPINESS',
             className: 'pill-happy',
-            color: '#FEF3C7',
-            textColor: '#B45309'
-        },
-        {
-            name: 'NEUTRAL',
-            className: 'pill-neutral',
-            color: '#F1F5F9',
-            textColor: '#1E293B'
-        },
-        {
-            name: 'SURPRISE',
-            className: 'pill-surprise',
-            color: '#DBEAFE',
-            textColor: '#1D4ED8'
-        },
-        {
-            name: 'SADNESS',
-            className: 'pill-sadness',
-            color: '#E5E7EB',
-            textColor: '#374151'
-        },
-        {
-            name: 'FEAR',
-            className: 'pill-fear',
-            color: '#F3E8FF',
-            textColor: '#6D28D9'
+            color: '#ff9900'
         },
         {
             name: 'ANGER',
             className: 'pill-anger',
-            color: '#FEE2E2',
-            textColor: '#B91C1C'
+            color: '#f04438'
+        },
+        {
+            name: 'DISGUST',
+            className: 'pill-disgust',
+            color: '#22c875'
+        },
+        {
+            name: 'FEAR',
+            className: 'pill-fear',
+            color: '#ff7955'
+        },
+        {
+            name: 'NEUTRALITY',
+            className: 'pill-neutral',
+            color: '#303642'
+        },
+        {
+            name: 'SADNESS',
+            className: 'pill-sadness',
+            color: '#258bff'
         }
     ];
 
@@ -266,9 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 angry: 'ANGER',
                 disgust: 'DISGUST',
                 fear: 'FEAR',
-                neutral: 'NEUTRAL',
+                neutral: 'NEUTRALITY',
                 sad: 'SADNESS',
-                surprise: 'SURPRISE'
             };
 
             const detectedName =
@@ -286,22 +279,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 item => item.name === detectedName
             );
 
-            if (detected) {
-                resultEmotionBadge.textContent = detected.name;
-                resultEmotionBadge.style.background = detected.color;
-                resultEmotionBadge.style.color = detected.textColor;
-            } else {
-                // Fallback for DISGUST, which is not in the current legend.
-                resultEmotionBadge.textContent = detectedName;
-                resultEmotionBadge.style.background = '#FEE2E2';
-                resultEmotionBadge.style.color = '#B91C1C';
+            // Display the detected emotion.
+            if (resultEmotionText) {
+                resultEmotionText.textContent = detectedName;
             }
 
-            // Show the model score if the backend provides it.
-            if (data.score !== undefined && Number.isFinite(Number(data.score))) {
-                resultEmotionBadge.textContent +=
-                    ` (${Number(data.score).toFixed(2)}%)`;
+            // Update the result indicator color.
+            const resultEmotionBadge = resultEmotionText
+                ? resultEmotionText.parentElement
+                : null;
+
+            const resultDot = resultEmotionBadge
+                ? resultEmotionBadge.querySelector('.result-dot')
+                : null;
+
+            if (resultDot && detected) {
+                resultDot.style.backgroundColor = detected.color;
             }
+
+            // Update the active emotion in the legend.
+            document.querySelectorAll('.legend-pill').forEach(pill => {
+                pill.classList.toggle(
+                    'active',
+                    pill.dataset.emotion === detectedName
+                );
+            });
 
             // Display the result section.
             detectedEmotionSection.classList.remove('hidden');
