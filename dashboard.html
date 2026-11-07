@@ -94,7 +94,7 @@
                             <p class="action-desc">Use your camera to capture a photo and analyze the detected emotion.</p>
                         </div>
                         <div class="action-btn-container">
-                            <button class="btn-action btn-action-primary" id="btnCaptureAction">
+                            <button class="btn-action btn-action-primary" id="btnCaptureAction" onclick="location.href='capture_photo.html'">
                                 <img src="icons/quickActionsbtn_capture.svg">
                                 <span>Capture Photo</span>
                             </button>
@@ -111,11 +111,10 @@
                             <p class="action-desc">Upload a photo from your device to analyze the detected emotion.</p>
                         </div>
                         <div class="action-btn-container">
-                            <button class="btn-action btn-action-pink" id="btnUploadAction">
+                            <button class="btn-action btn-action-pink" id="btnUploadAction" onclick="location.href='upload_photo.html'">
                                 <img src="icons/quickActionsbtn_upload.svg">
                                 <span>Upload Photo</span>
                             </button>
-                            <input type="file" id="fileInputPicker" accept="image/*" style="display: none;">
                         </div>
                     </div>
 
@@ -126,10 +125,9 @@
                                 <img src="icons/quickActions_history.svg">
                             </div>
                             <h3 class="action-title">History</h3>
-                            <p class="action-desc">View your previous emotion recognition results and activity.</p>
                         </div>
                         <div class="action-btn-container">
-                            <button class="btn-action btn-action-outline" id="btnHistoryAction">
+                            <button class="btn-action btn-action-outline" id="btnHistoryAction" onclick="location.href='history.html'">
                                 <img src="icons/quickActionsbtn_history.svg">
                                 <span>View History</span>
                             </button>
