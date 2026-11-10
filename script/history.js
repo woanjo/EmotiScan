@@ -22,15 +22,20 @@ document.addEventListener('DOMContentLoaded', () => {
         "NEUTRAL": "#334155"
     };
 
-    // History data source with updated short emotion labels
-    const historyData = [
-        { id: "LOG #8491", emotion: "HAPPY", date: "Oct 24, 2025 • 10:42 AM", variant: "variant-happy", image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80" },
-        { id: "LOG #8489", emotion: "SAD", date: "Oct 24, 2025 • 09:18 AM", variant: "variant-sad", image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80" },
-        { id: "LOG #8485", emotion: "ANGRY", date: "Oct 23, 2025 • 04:15 PM", variant: "variant-angry", image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80" },
-        { id: "LOG #8480", emotion: "FEAR", date: "Oct 23, 2025 • 02:45 PM", variant: "variant-fear", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80" },
-        { id: "LOG #8477", emotion: "DISGUST", date: "Oct 23, 2025 • 01:20 PM", variant: "variant-disgust", image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80" },
-        { id: "LOG #8472", emotion: "NEUTRAL", date: "Oct 22, 2025 • 11:05 AM", variant: "variant-neutral", image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80" }
-    ];
+    // The backend saves emotions in lowercase (happy, sad, ...).
+    // The History page shows them in uppercase labels.
+    const emotionLabels = {
+        happy: "HAPPY",
+        sad: "SAD",
+        angry: "ANGRY",
+        fear: "FEAR",
+        disgust: "DISGUST",
+        neutral: "NEUTRAL"
+    };
+
+    // History data now comes from the backend (Neon database).
+    // It starts empty and is filled by loadHistory().
+    const historyData = [];
 
     let selectedItems = new Set();
     let currentModalItem = null;
@@ -52,6 +57,78 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalDot = document.getElementById('modalDot');
     const modalPreviewCard = document.getElementById('modalPreviewCard');
     const modalDeleteBtn = document.getElementById('modalDeleteBtn');
+
+    // ========================================
+    // BACKEND CONNECTION
+    // ========================================
+
+    // Turn "2026-11-10T09:15:00+00:00" into "Nov 10, 2026 • 5:15 PM"
+    function formatDate(isoString) {
+        const date = new Date(isoString);
+
+        const day = date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+
+        const time = date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit'
+        });
+
+        return `${day} • ${time}`;
+    }
+
+    // Convert one scan from the backend into the shape the cards use.
+    function toHistoryItem(scan) {
+        const label = emotionLabels[scan.emotion] || scan.emotion.toUpperCase();
+
+        return {
+            dbId: scan.id,                       // real id in the database
+            id: `LOG #${scan.id}`,               // text shown on the card
+            emotion: label,
+            date: formatDate(scan.created_at),
+            variant: `variant-${label.toLowerCase()}`,
+            image: scan.image_url                // /api/scans/<id>/image
+        };
+    }
+
+    // Ask the backend for all saved scans, then draw the cards.
+    async function loadHistory() {
+        try {
+            const response = await fetch('/api/history');
+
+            if (!response.ok) {
+                throw new Error('Server returned an error.');
+            }
+
+            const scans = await response.json();
+
+            historyData.length = 0;
+            scans.forEach(scan => historyData.push(toHistoryItem(scan)));
+        } catch (error) {
+            console.error('Unable to load history:', error);
+            showToast('Unable to load history. Is the server running?', 'error');
+        }
+
+        renderCards();
+    }
+
+    // Delete one scan (and its photo) from the database.
+    async function deleteFromServer(dbId) {
+        const response = await fetch(`/api/scans/${dbId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Delete failed.');
+        }
+    }
+
+    // ========================================
+    // CARDS
+    // ========================================
 
     function renderCards() {
         if (!historyGrid) return;
@@ -156,28 +233,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Delete all selected scans
     if (deleteSelectedBtn) {
-        deleteSelectedBtn.addEventListener('click', () => {
-            const indexToRemove = historyData.filter(item => selectedItems.has(item.id));
-            indexToRemove.forEach(item => {
+        deleteSelectedBtn.addEventListener('click', async () => {
+            const itemsToDelete = historyData.filter(item => selectedItems.has(item.id));
+
+            try {
+                // Delete each selected scan in the database first.
+                await Promise.all(
+                    itemsToDelete.map(item => deleteFromServer(item.dbId))
+                );
+            } catch (error) {
+                console.error('Delete selected error:', error);
+                showToast('Unable to delete the selected items.', 'error');
+                await loadHistory();   // reload so the page matches the database
+                return;
+            }
+
+            // Then remove them from the page.
+            itemsToDelete.forEach(item => {
                 const idx = historyData.indexOf(item);
                 if (idx > -1) historyData.splice(idx, 1);
             });
+
             selectedItems.clear();
             renderCards();
             showToast('Selected items deleted successfully.', 'success');
         });
     }
 
-    function deleteItem(id) {
-        const idx = historyData.findIndex(item => item.id === id);
-        if (idx > -1) {
-            historyData.splice(idx, 1);
-            selectedItems.delete(id);
-            renderCards();
-            closeModal();
-            showToast(`Log ${id} deleted.`, 'success');
+    // Delete one scan
+    async function deleteItem(id) {
+        const item = historyData.find(entry => entry.id === id);
+        if (!item) return;
+
+        try {
+            await deleteFromServer(item.dbId);
+        } catch (error) {
+            console.error('Delete error:', error);
+            showToast('Unable to delete this log.', 'error');
+            return;
         }
+
+        const idx = historyData.indexOf(item);
+        if (idx > -1) historyData.splice(idx, 1);
+
+        selectedItems.delete(id);
+        renderCards();
+        closeModal();
+        showToast(`Log ${id} deleted.`, 'success');
     }
 
     // Modal display logic
@@ -219,6 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initialize Grid
-    renderCards();
+    // Load the saved scans from the backend when the page opens.
+    loadHistory();
 });
