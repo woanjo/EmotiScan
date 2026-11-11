@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "ANGRY": "#EF4444",
         "FEAR": "#F97316",
         "DISGUST": "#10B981",
+        "SURPRISE": "#A855F7",
         "NEUTRAL": "#334155"
     };
 
@@ -30,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         angry: "ANGRY",
         fear: "FEAR",
         disgust: "DISGUST",
+        surprise: "SURPRISE",
         neutral: "NEUTRAL"
     };
 

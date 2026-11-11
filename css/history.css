@@ -501,6 +501,18 @@ body {
     outline-offset: -1px; 
 }
 
+.variant-surprise .card-preview-box {
+    background: rgba(250, 245, 255, 0.20);
+    outline: 2px solid rgba(168, 85, 247, 0.80);
+    outline-offset: -2px;
+}
+.variant-surprise .badge {
+    background: #F3E8FF;
+    color: #581C87;
+    outline: 1px solid #D8B4FE;
+    outline-offset: -1px;
+}
+
 /* Detail Modal Pop-up */
 .modal-overlay {
     position: fixed;

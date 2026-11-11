@@ -210,7 +210,8 @@ def analyze_emotion():
             "disgust",
             "fear",
             "neutral",
-            "sad"
+            "sad",
+            "surprise"
         ]
 
         # Keep only the six supported emotions.
