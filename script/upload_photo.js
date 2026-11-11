@@ -76,6 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
             name: 'SADNESS',
             className: 'pill-sadness',
             color: '#258bff'
+        },
+        {
+            name: 'SURPRISE',
+            className: 'pill-surprise',
+            color: '#a855f7'
         }
     ];
 
@@ -459,6 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     fear: 'FEAR',
                     neutral: 'NEUTRALITY',
                     sad: 'SADNESS',
+                    surprise: 'SURPRISE',
                 };
 
                 const detectedName =

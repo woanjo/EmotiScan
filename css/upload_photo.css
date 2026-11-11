@@ -699,6 +699,14 @@ body {
     --emotion-card-bg: #f8fbff;
 }
 
+.pill-surprise {
+    --emotion-color:#a855f7;
+    --emotion-soft: #f3e8ff;
+    --emotion-border: #c084fc;
+    --emotion-glow: 168, 85, 247;
+    --emotion-card-bg: #fdf7ff;
+}
+
 .legend-dot {
     width: 8px;
     height: 8px;
