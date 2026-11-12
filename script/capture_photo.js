@@ -22,7 +22,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const detectedEmotionSection = document.getElementById('detectedEmotionSection');
     const resultPhoto = document.getElementById('resultPhoto');
     const resultEmotionText = document.getElementById('resultEmotionText');
+    const resultCard = document.querySelector('.result-box-card');
     const toast = document.getElementById('toast');
+
+    function displayEmotion(emotion) {
+    if (!emotion) return;
+
+    // Emotion name in the result badge
+    resultEmotionText.textContent = emotion.name;
+
+    // Dot color in the badge and in the "Analysis Complete" pill
+    const badge = resultEmotionText.parentElement;
+    badge.style.setProperty('--result-color', emotion.color);
+    detectedEmotionSection.style.setProperty('--result-color', emotion.color);
+
+    // Card colors: remove the old emotion class, add the new one
+    emotionsConfig.forEach(item => resultCard.classList.remove(item.className));
+    resultCard.classList.add(emotion.className);
+
+    // Highlight the matching pill in the legend
+    document.querySelectorAll('.legend-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.dataset.emotion === emotion.name);
+    });
+}
 
     // ========================================
     // VARIABLES
@@ -280,15 +302,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Display the captured photo.
             resultPhoto.src = capturedDataUrl;
 
-            // Find the matching emotion design.
+            // Find the matching emotion design (this creates "detected").
             const detected = emotionsConfig.find(
                 item => item.name === detectedName
             );
 
-            // Display the detected emotion.
-            if (resultEmotionText) {
-                resultEmotionText.textContent = detectedName;
-            }
+            // Update the badge, card colors, and legend.
+            displayEmotion(detected);
 
             // Update the result indicator color.
             const resultEmotionBadge = resultEmotionText
