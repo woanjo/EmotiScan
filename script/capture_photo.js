@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok || !data.success) {
                 throw new Error(
-                    data.message || 'Unable to analyze the captured photo.'
+                    data.error || 'Unable to analyze the captured photo.'
                 );
             }
 
