@@ -1,3 +1,6 @@
+// Page to open after a successful login. Change this to your main scanning page.
+const HOME_PAGE = "home.html";
+
 // Login elements
 const loginForm = document.getElementById("loginForm");
 const loginPassword = document.getElementById("loginPassword");
@@ -137,22 +140,55 @@ if (toggleLoginPassword && loginPassword) {
 }
 
 
-/* 5. LOGIN FORM DEMO */
+/* 5. LOGIN FORM (connected to the Flask backend) */
 
 if (loginForm) {
-    loginForm.addEventListener("submit", function (event) {
+    const loginButton = loginForm.querySelector(".btn-primary");
+
+    loginForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
-        const username = document.getElementById("loginUsername").value.trim();
+        const identifier = document.getElementById("loginUsername").value.trim();
         const password = loginPassword.value;
 
-        if (!username || !password) {
+        if (!identifier || !password) {
             alert("Please enter your username and password.");
             return;
         }
 
-        // Demo only: no account is checked and no login occurs.
-        alert("Login demo: connect your authentication system to log in.");
+        // Prevent double submits while waiting for the server.
+        if (loginButton) {
+            loginButton.disabled = true;
+        }
+
+        try {
+            const response = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({ identifier: identifier, password: password })
+            });
+
+            const data = await response.json().catch(function () {
+                return {};
+            });
+
+            if (!response.ok) {
+                alert(data.error || "Login failed. Please try again.");
+                loginPassword.value = "";
+                loginPassword.focus();
+                return;
+            }
+
+            // Success: open the main page.
+            window.location.href = HOME_PAGE;
+        } catch (error) {
+            alert("Could not reach the server. Please try again.");
+        } finally {
+            if (loginButton) {
+                loginButton.disabled = false;
+            }
+        }
     });
 }
 

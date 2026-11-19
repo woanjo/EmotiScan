@@ -68,17 +68,19 @@ birthdateInput.addEventListener('input', (event) => {
 
 
 /* ==========================================================================
-   3. FORM SUBMISSION & VALIDATION
+   3. FORM SUBMISSION & VALIDATION  (now talks to the backend)
    ========================================================================== */
 
 const registerForm = document.getElementById('registerForm');
+const submitBtn = registerForm.querySelector('.btn-submit');
 
-registerForm.addEventListener('submit', (event) => {
+registerForm.addEventListener('submit', async (event) => {
     // Prevent the page from reloading.
     event.preventDefault();
 
     const firstName = document.getElementById('firstName').value.trim();
     const lastName = document.getElementById('lastName').value.trim();
+    const birthdate = birthdateInput.value.trim();
     const email = document.getElementById('email').value.trim();
     const username = document.getElementById('username').value.trim();
     const password = passwordInput.value;
@@ -97,8 +99,39 @@ registerForm.addEventListener('submit', (event) => {
         return;
     }
 
-    // Demo success message.
-    showToast('Account registered successfully!');
+    if (password.length < 8) {
+        showToast('Password must be at least 8 characters.');
+        return;
+    }
+
+    // Send to the backend.
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ firstName, lastName, birthdate, email, username, password })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            showToast(data.error || 'Registration failed. Please try again.');
+            return;
+        }
+
+        showToast(data.message || 'Account registered successfully!');
+        registerForm.reset();
+
+        // Send the user to the login page after a short pause.
+        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    } catch (err) {
+        showToast('Could not reach the server. Please try again.');
+    } finally {
+        submitBtn.disabled = false;
+    }
 });
 
 
@@ -110,9 +143,6 @@ const loginLink = document.getElementById('loginLink');
 
 loginLink.addEventListener('click', () => {
     showToast('Navigating to Login screen...');
-
-    // To open a separate login page, replace the line above with:
-    // window.location.href = 'login.html';
 });
 
 
