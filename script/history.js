@@ -61,6 +61,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalDeleteBtn = document.getElementById('modalDeleteBtn');
 
     // ========================================
+    // SESSION & NAVBAR PROFILE
+    // ========================================
+
+    async function verifySessionAndHeader() {
+        const headerAvatar = document.getElementById('headerUserAvatar');
+        const headerName = document.getElementById('headerUserName');
+
+        try {
+            const res = await fetch('/api/me');
+
+            if (res.status === 401) {
+                window.location.href = 'index.html';
+                return false;
+            }
+
+            const data = await res.json();
+            if (data.user) {
+                const user = data.user;
+                const fullName = `${user.first_name} ${user.last_name}`;
+                const initials = `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}` || 'U';
+                const fallbackAvatar = `https://placehold.co/100x100/F4DAFF/794A98?text=${initials}`;
+
+                if (headerName) headerName.textContent = fullName;
+                if (headerAvatar) headerAvatar.src = user.avatar_url || fallbackAvatar;
+            }
+            return true;
+        } catch (err) {
+            console.error('Failed to verify session:', err);
+            return true;
+        }
+    }
+
+    // ========================================
     // BACKEND CONNECTION
     // ========================================
 
@@ -100,6 +133,11 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadHistory() {
         try {
             const response = await fetch('/api/history');
+
+            if (response.status === 401) {
+                window.location.href = 'index.html';
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error('Server returned an error.');
@@ -325,6 +363,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Load the saved scans from the backend when the page opens.
-    loadHistory();
+    // Verify session, update header, and load saved scans when the page opens.
+    (async () => {
+        const isAuthenticated = await verifySessionAndHeader();
+        if (isAuthenticated) {
+            loadHistory();
+        }
+    })();
 });

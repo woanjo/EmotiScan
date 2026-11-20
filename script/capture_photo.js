@@ -407,6 +407,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ========================================
+    // SESSION & NAVBAR PROFILE
+    // ========================================
+
+    (async () => {
+        const headerAvatar = document.getElementById('headerUserAvatar');
+        const headerName = document.getElementById('headerUserName');
+
+        try {
+            const res = await fetch('/api/me');
+
+            if (res.status === 401) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const data = await res.json();
+            if (data.user) {
+                const user = data.user;
+                const fullName = `${user.first_name} ${user.last_name}`;
+                const initials = `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}` || 'U';
+                const fallbackAvatar = `https://placehold.co/100x100/F4DAFF/794A98?text=${initials}`;
+
+                if (headerName) headerName.textContent = fullName;
+                if (headerAvatar) headerAvatar.src = user.avatar_url || fallbackAvatar;
+            }
+        } catch (err) {
+            console.error('Failed to verify session:', err);
+        }
+    })();
+
+    // ========================================
     // START CAMERA WHEN PAGE LOADS
     // ========================================
 
