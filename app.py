@@ -1,9 +1,11 @@
 import os
+import time
 
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 
 from flask import Flask, jsonify, request, send_from_directory, Response, session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from dotenv import load_dotenv
 from pathlib import Path
 from datetime import datetime, timezone, date
@@ -73,6 +75,7 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     username = db.Column(db.String(40), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    avatar = db.Column(db.LargeBinary, nullable=True)
     created_at = db.Column(
         db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -88,6 +91,8 @@ class User(db.Model):
             "email": self.email,
             "birthdate": self.birthdate.isoformat() if self.birthdate else None,
             "member_since": self.created_at.strftime("%B %Y"),
+            "created_at": self.created_at.isoformat(),
+            "avatar_url": f"/api/users/{self.id}/avatar?t={int(time.time())}" if self.avatar else None,
         }
 
 
@@ -118,9 +123,10 @@ class Scan(db.Model):
 
 
 # Create the tables in Neon if they do not exist yet.
-# NOTE: create_all() does NOT add user_id to an existing "scans" table.
-# Run this once in the Neon SQL editor (or drop "scans" if it only has tests):
+# NOTE: create_all() does NOT add columns to existing tables.
+# If needed in Neon SQL editor:
 #   ALTER TABLE scans ADD COLUMN user_id INTEGER REFERENCES users(id);
+#   ALTER TABLE users ADD COLUMN avatar BYTEA;
 with app.app_context():
     db.create_all()
 
@@ -245,6 +251,10 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 # Allowed image formats
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 
+EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{3,30}$")
+MIN_AGE = 13
+
 
 def allowed_file(filename):
     return (
@@ -263,6 +273,26 @@ def make_thumbnail(path, max_size=400):
         buffer = io.BytesIO()
         img.save(buffer, format="JPEG", quality=75)
         return buffer.getvalue()
+
+
+def json_error(message, status=400):
+    return jsonify({"success": False, "error": message}), status
+
+
+def parse_birthdate(raw):
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y", "%B %d, %Y", "%b %d, %Y"):
+        try:
+            return datetime.strptime(raw, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def age_from(born):
+    today = date.today()
+    return today.year - born.year - (
+        (today.month, today.day) < (born.month, born.day)
+    )
 
 
 # ==========================================================
@@ -453,7 +483,158 @@ def me():
 
 
 # ==========================================================
-# API ROUTES: SCANS
+# API ROUTES: PROFILE MANAGEMENT
+# ==========================================================
+
+# Update profile details (First Name, Last Name, Username, Email, Birthdate)
+@app.route("/api/profile", methods=["PUT"])
+@login_required
+def update_profile():
+    user = db.session.get(User, session["user_id"])
+    if user is None:
+        session.clear()
+        return json_error("User not found.", 404)
+
+    data = request.get_json(silent=True) or {}
+    first_name = (data.get("firstName") or "").strip()
+    last_name = (data.get("lastName") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    username = (data.get("username") or "").strip()
+    birthdate_raw = (data.get("birthdate") or "").strip()
+
+    if not all([first_name, last_name, email, username]):
+        return json_error("First name, last name, username, and email are required.", 400)
+
+    if len(first_name) > 50 or len(last_name) > 50:
+        return json_error("Names must be 50 characters or fewer.", 400)
+
+    if not EMAIL_RE.match(email) or len(email) > 254:
+        return json_error("Please enter a valid email address.", 400)
+
+    if not USERNAME_RE.match(username):
+        return json_error('Username must be 3-30 characters (letters, numbers, ".", "_" or "-").', 400)
+
+    birthdate = None
+    if birthdate_raw:
+        try:
+            birthdate = date.fromisoformat(birthdate_raw)
+        except ValueError:
+            birthdate = parse_birthdate(birthdate_raw)
+
+        if birthdate is None:
+            return json_error("Please enter a valid birthdate.", 400)
+        if birthdate > date.today():
+            return json_error("Birthdate cannot be in the future.", 400)
+        if age_from(birthdate) < MIN_AGE:
+            return json_error(f"You must be at least {MIN_AGE} years old.", 400)
+
+    if User.query.filter(User.email == email, User.id != user.id).first():
+        return json_error("That email is already in use by another account.", 409)
+
+    if User.query.filter(func.lower(User.username) == username.lower(), User.id != user.id).first():
+        return json_error("That username is already taken.", 409)
+
+    try:
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.username = username
+        user.birthdate = birthdate
+        db.session.commit()
+    except Exception as error:
+        db.session.rollback()
+        print("Profile update error:", error)
+        return json_error("Failed to update profile.", 500)
+
+    return jsonify({
+        "success": True,
+        "message": "Profile updated successfully!",
+        "user": user.to_dict()
+    })
+
+
+# Change password
+@app.route("/api/profile/password", methods=["PUT"])
+@login_required
+def update_password():
+    user = db.session.get(User, session["user_id"])
+    if user is None:
+        session.clear()
+        return json_error("User not found.", 404)
+
+    data = request.get_json(silent=True) or {}
+    current_password = data.get("currentPassword") or ""
+    new_password = data.get("newPassword") or ""
+
+    if not current_password or not new_password:
+        return json_error("Please fill in all password fields.", 400)
+
+    if not check_password_hash(user.password_hash, current_password):
+        return json_error("Current password is incorrect.", 401)
+
+    if not (8 <= len(new_password) <= 128) or not re.search(r"[a-zA-Z]", new_password) or not re.search(r"[0-9]", new_password):
+        return json_error("New password must be at least 8 characters with letters & numbers.", 400)
+
+    try:
+        user.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+    except Exception as error:
+        db.session.rollback()
+        print("Password update error:", error)
+        return json_error("Failed to update password.", 500)
+
+    return jsonify({"success": True, "message": "Password updated successfully!"})
+
+
+# Upload profile picture
+@app.route("/api/profile/avatar", methods=["POST"])
+@login_required
+def upload_avatar():
+    user = db.session.get(User, session["user_id"])
+    if user is None:
+        return json_error("User not found.", 404)
+
+    if "avatar" not in request.files:
+        return json_error("No image provided.", 400)
+
+    file = request.files["avatar"]
+    if file.filename == "" or not allowed_file(file.filename):
+        return json_error("Please upload JPG, JPEG, PNG, or WEBP.", 400)
+
+    temp_path = None
+    try:
+        suffix = Path(secure_filename(file.filename)).suffix.lower()
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
+            temp_path = temp_file.name
+            file.save(temp_path)
+
+        user.avatar = make_thumbnail(temp_path, max_size=300)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "avatar_url": f"/api/users/{user.id}/avatar?t={int(time.time())}"
+        })
+    except Exception as error:
+        db.session.rollback()
+        print("Avatar upload error:", error)
+        return json_error("Failed to upload avatar.", 500)
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
+
+
+# Serve user's profile picture
+@app.route("/api/users/<int:user_id>/avatar")
+def get_user_avatar(user_id):
+    user = db.session.get(User, user_id)
+    if user is None or not user.avatar:
+        return json_error("Avatar not found.", 404)
+    return Response(user.avatar, mimetype="image/jpeg")
+
+
+# ==========================================================
+# API ROUTES: SCANS & EMOTION ANALYSIS
 # ==========================================================
 
 # Analyze facial expression and save the result
