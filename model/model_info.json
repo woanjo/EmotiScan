@@ -1,0 +1,17 @@
+{
+  "img_size": 128,
+  "backbone": "mobilenetv2",
+  "classes": [
+    "angry",
+    "disgust",
+    "fear",
+    "happy",
+    "neutral",
+    "sad",
+    "surprise"
+  ],
+  "trained_on": {
+    "raf_db": true,
+    "fer2013": true
+  }
+}
