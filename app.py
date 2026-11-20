@@ -1,46 +1,29 @@
-from flask import (
-    Flask, jsonify, request, send_from_directory, Response, session
-)
+import os
+
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+
+from flask import Flask, jsonify, request, send_from_directory, Response
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
 from dotenv import load_dotenv
 from pathlib import Path
-from datetime import datetime, timezone, date, timedelta
-from collections import defaultdict, deque
-from functools import wraps
+from datetime import datetime, timezone
 from deepface import DeepFace
+import keras
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash
 from PIL import Image, ImageOps
+import numpy as np
+import cv2
 import tempfile
+import json
 import io
-import os
-import re
-import time
 
-# Load DATABASE_URL and SECRET_KEY from the .env file
+# Load DATABASE_URL from the .env file
 load_dotenv()
 
 # Initialize Flask
 app = Flask(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
-
-# ==========================================================
-# SECURITY SETTINGS (NEW)
-# ==========================================================
-
-# Needed to sign the login session cookie. Add SECRET_KEY to your .env file.
-SECRET_KEY = os.getenv("SECRET_KEY")
-
-if not SECRET_KEY:
-    raise RuntimeError("SECRET_KEY is missing. Add it to your .env file.")
-
-app.config["SECRET_KEY"] = SECRET_KEY
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = os.getenv("APP_ENV") == "production"
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)
 
 # ==========================================================
 # DATABASE (Neon PostgreSQL)
@@ -66,43 +49,6 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 
 db = SQLAlchemy(app)
-
-
-class User(db.Model):
-    """A registered EmotiScan account. (NEW)"""
-
-    __tablename__ = "users"
-
-    id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
-    birthdate = db.Column(db.Date, nullable=True)
-    email = db.Column(db.String(254), nullable=False, unique=True)
-    username = db.Column(db.String(30), nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    avatar = db.Column(db.LargeBinary, nullable=True)
-    created_at = db.Column(
-        db.DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        nullable=False,
-    )
-
-    # Usernames are unique regardless of upper/lower case.
-    __table_args__ = (
-        db.Index("ix_users_username_lower", func.lower(username), unique=True),
-    )
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "birthdate": self.birthdate.isoformat() if self.birthdate else None,
-            "email": self.email,
-            "username": self.username,
-            "created_at": self.created_at.isoformat(),
-            "avatar_url": f"/api/users/{self.id}/avatar?t={int(time.time())}" if self.avatar else None,
-        }
 
 
 class Scan(db.Model):
@@ -131,9 +77,119 @@ class Scan(db.Model):
 
 
 # Create the tables in Neon if they do not exist yet.
-# (Existing tables are left untouched; only the new "users" table is added.)
 with app.app_context():
     db.create_all()
+
+# ==========================================================
+# OUR OWN EMOTION MODEL (trained in Google Colab)
+# ==========================================================
+
+MODEL_DIR = BASE_DIR / "model"
+
+# Leave as None to use the newest .keras file in the model folder,
+# or write the file name, for example "emotiscan_model_v3.keras".
+MODEL_FILE = None
+
+# Which face detector DeepFace uses to find the face in the photo.
+# "opencv" is fast. If faces are missed, try "mtcnn" (pip install mtcnn).
+DETECTOR = "opencv"
+
+# Extra space kept around the detected face (0.1 = 10% of the face width).
+FACE_MARGIN = 0.1
+
+# Large photos are shrunk to this size (longest side) before face detection.
+MAX_DETECT_SIZE = 1000
+
+
+def load_emotion_model():
+    if MODEL_FILE:
+        model_path = MODEL_DIR / MODEL_FILE
+    else:
+        keras_files = sorted(
+            MODEL_DIR.glob("*.keras"),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+        if not keras_files:
+            raise RuntimeError(f"No .keras model file found in {MODEL_DIR}")
+        model_path = keras_files[0]
+
+    print("EMOTISCAN MODEL FILE:", model_path.name)
+
+    # compile=False: we only need predictions, not the training settings.
+    model = keras.models.load_model(model_path, compile=False)
+
+    # Emotion names, in the same order the model outputs them.
+    with open(MODEL_DIR / "class_names.json") as file:
+        class_names = json.load(file)
+
+    # Image size the model was trained with.
+    img_size = 128
+    info_path = MODEL_DIR / "model_info.json"
+    if info_path.exists():
+        with open(info_path) as file:
+            img_size = json.load(file).get("img_size", img_size)
+
+    print("EMOTISCAN EMOTIONS:", class_names, "| IMAGE SIZE:", img_size)
+    return model, class_names, img_size
+
+
+# Load once when the server starts (not on every request).
+emotion_model, CLASS_NAMES, IMG_SIZE = load_emotion_model()
+
+
+def read_photo_as_bgr(path):
+    """Open the photo, fix phone rotation, and shrink very large photos."""
+    with Image.open(path) as img:
+        img = ImageOps.exif_transpose(img).convert("RGB")
+        rgb = np.array(img)
+
+    bgr = np.ascontiguousarray(rgb[:, :, ::-1])   # OpenCV uses BGR order
+
+    longest = max(bgr.shape[:2])
+    if longest > MAX_DETECT_SIZE:
+        scale = MAX_DETECT_SIZE / longest
+        bgr = cv2.resize(bgr, None, fx=scale, fy=scale)
+
+    return bgr
+
+
+def crop_face(bgr):
+    """Find the biggest face and return it cropped.
+    DeepFace raises ValueError('Face could not be detected...') if none is found."""
+    faces = DeepFace.extract_faces(
+        img_path=bgr,
+        detector_backend=DETECTOR,
+        enforce_detection=True,
+        align=False,
+    )
+
+    best = max(
+        faces,
+        key=lambda f: f["facial_area"]["w"] * f["facial_area"]["h"],
+    )
+    area = best["facial_area"]
+    x, y, w, h = area["x"], area["y"], area["w"], area["h"]
+
+    margin = int(FACE_MARGIN * w)
+    top = max(y - margin, 0)
+    bottom = min(y + h + margin, bgr.shape[0])
+    left = max(x - margin, 0)
+    right = min(x + w + margin, bgr.shape[1])
+
+    return bgr[top:bottom, left:right]
+
+
+def predict_emotion(face_bgr):
+    """Return the model's probability (0 to 1) for every emotion."""
+    rgb = cv2.cvtColor(face_bgr, cv2.COLOR_BGR2RGB)
+    rgb = cv2.resize(rgb, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_LINEAR)
+    face = rgb.astype("float32")
+
+    # Average the prediction of the face and its mirror image (more stable).
+    batch = np.stack([face, face[:, ::-1, :]])
+    return emotion_model.predict(batch, verbose=0).mean(axis=0)
+
 
 # ==========================================================
 # SETTINGS
@@ -144,9 +200,6 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
 # Allowed image formats
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
-
-# Minimum age to register
-MIN_AGE = 13
 
 
 def allowed_file(filename):
@@ -166,80 +219,6 @@ def make_thumbnail(path, max_size=400):
         buffer = io.BytesIO()
         img.save(buffer, format="JPEG", quality=75)
         return buffer.getvalue()
-
-
-# ==========================================================
-# AUTH HELPERS (NEW)
-# ==========================================================
-
-EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
-USERNAME_RE = re.compile(r"^[a-zA-Z0-9._-]{3,30}$")
-BIRTHDATE_RE = re.compile(r"^(\d{2})\s*/\s*(\d{2})\s*/\s*(\d{4})$")
-
-
-def parse_birthdate(raw):
-    """Convert 'MM / DD / YYYY' (what register.js produces) to a date."""
-    match = BIRTHDATE_RE.match(str(raw).strip())
-
-    if not match:
-        return None
-
-    month, day, year = (int(part) for part in match.groups())
-
-    try:
-        return date(year, month, day)
-    except ValueError:
-        return None
-
-
-def age_from(born):
-    today = date.today()
-    return today.year - born.year - (
-        (today.month, today.day) < (born.month, born.day)
-    )
-
-
-def json_error(message, status):
-    return jsonify({"error": message}), status
-
-
-def login_required(view):
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        if "user_id" not in session:
-            return json_error("Not authenticated.", 401)
-        return view(*args, **kwargs)
-    return wrapped
-
-
-# Simple in-memory limiter: 20 attempts per IP every 15 minutes.
-# It resets when the server restarts.
-_attempts = defaultdict(deque)
-RATE_LIMIT = 20
-RATE_WINDOW = 15 * 60
-
-
-def rate_limited(view):
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        now = time.time()
-        attempts = _attempts[request.remote_addr]
-
-        while attempts and now - attempts[0] > RATE_WINDOW:
-            attempts.popleft()
-
-        if len(attempts) >= RATE_LIMIT:
-            return json_error("Too many attempts. Please try again later.", 429)
-
-        attempts.append(now)
-        return view(*args, **kwargs)
-    return wrapped
-
-
-def start_session(user):
-    session.clear()
-    session.permanent = True
-    session["user_id"] = user.id
 
 
 # ==========================================================
@@ -283,324 +262,6 @@ def backend_status():
     })
 
 
-# ----------------------------------------------------------
-# ACCOUNTS (NEW)
-# ----------------------------------------------------------
-
-# Create a new account (called by register.js)
-@app.route("/api/register", methods=["POST"])
-@rate_limited
-def register():
-    data = request.get_json(silent=True) or {}
-
-    first_name = data.get("firstName")
-    last_name = data.get("lastName")
-    email = data.get("email")
-    username = data.get("username")
-    password = data.get("password")
-    birthdate_raw = data.get("birthdate")
-
-    # Required fields
-    required = [first_name, last_name, email, username, password]
-
-    if not all(isinstance(v, str) and v.strip() for v in required):
-        return json_error("Please fill in all required fields.", 400)
-
-    first_name = first_name.strip()
-    last_name = last_name.strip()
-    email = email.strip().lower()
-    username = username.strip()
-
-    if len(first_name) > 50 or len(last_name) > 50:
-        return json_error("Names must be 50 characters or fewer.", 400)
-
-    if not EMAIL_RE.match(email) or len(email) > 254:
-        return json_error("Please enter a valid email address.", 400)
-
-    if not USERNAME_RE.match(username):
-        return json_error(
-            'Username must be 3-30 characters '
-            '(letters, numbers, ".", "_" or "-").', 400
-        )
-
-    if not 8 <= len(password) <= 128:
-        return json_error(
-            "Password must be between 8 and 128 characters.", 400
-        )
-
-    # Birthdate is optional in the form, but checked if it is filled in.
-    birthdate = None
-
-    if isinstance(birthdate_raw, str) and birthdate_raw.strip():
-        birthdate = parse_birthdate(birthdate_raw)
-
-        if birthdate is None:
-            return json_error(
-                "Please enter a valid birthdate (MM / DD / YYYY).", 400
-            )
-
-        if birthdate > date.today():
-            return json_error("Birthdate cannot be in the future.", 400)
-
-        if age_from(birthdate) < MIN_AGE:
-            return json_error(
-                f"You must be at least {MIN_AGE} years old to register.", 400
-            )
-
-    # Duplicate checks
-    if User.query.filter_by(email=email).first():
-        return json_error("That email is already registered.", 409)
-
-    if User.query.filter(
-        func.lower(User.username) == username.lower()
-    ).first():
-        return json_error("That username is already taken.", 409)
-
-    try:
-        user = User(
-            first_name=first_name,
-            last_name=last_name,
-            birthdate=birthdate,
-            email=email,
-            username=username,
-            password_hash=generate_password_hash(password),
-        )
-        db.session.add(user)
-        db.session.commit()
-
-    except Exception as error:
-        # Also covers two people grabbing the same email/username at once.
-        db.session.rollback()
-        print("Register error:", error)
-
-        if User.query.filter_by(email=email).first() or User.query.filter(
-            func.lower(User.username) == username.lower()
-        ).first():
-            return json_error("Email or username is already in use.", 409)
-
-        return json_error("Something went wrong. Please try again.", 500)
-
-    start_session(user)
-
-    return jsonify({
-        "success": True,
-        "message": "Account registered successfully!",
-        "user": user.to_dict()
-    }), 201
-
-
-# Log in with email OR username
-@app.route("/api/login", methods=["POST"])
-@rate_limited
-def login():
-    data = request.get_json(silent=True) or {}
-
-    identifier = data.get("identifier")
-    password = data.get("password")
-
-    if (
-        not isinstance(identifier, str)
-        or not isinstance(password, str)
-        or not identifier.strip()
-        or not password
-    ):
-        return json_error(
-            "Please enter your email/username and password.", 400
-        )
-
-    identifier = identifier.strip()
-
-    user = User.query.filter(
-        (User.email == identifier.lower())
-        | (func.lower(User.username) == identifier.lower())
-    ).first()
-
-    # Same message for an unknown user and a wrong password.
-    if user is None or not check_password_hash(user.password_hash, password):
-        return json_error("Invalid credentials.", 401)
-
-    start_session(user)
-
-    return jsonify({
-        "success": True,
-        "message": "Logged in.",
-        "user": user.to_dict()
-    })
-
-
-# Who is logged in right now?
-@app.route("/api/me")
-@login_required
-def me():
-    user = db.session.get(User, session["user_id"])
-
-    if user is None:
-        session.clear()
-        return json_error("User not found.", 404)
-
-    return jsonify({"user": user.to_dict()})
-
-
-# Log out
-@app.route("/api/logout", methods=["POST"])
-def logout():
-    session.clear()
-    return jsonify({"success": True, "message": "Logged out."})
-    
-# ----------------------------------------------------------
-# PROFILE MANAGEMENT
-# ----------------------------------------------------------
-
-# Update profile details (First Name, Last Name, Username, Email, Birthdate)
-@app.route("/api/profile", methods=["PUT"])
-@login_required
-def update_profile():
-    user = db.session.get(User, session["user_id"])
-    if user is None:
-        session.clear()
-        return json_error("User not found.", 404)
-
-    data = request.get_json(silent=True) or {}
-    first_name = (data.get("firstName") or "").strip()
-    last_name = (data.get("lastName") or "").strip()
-    email = (data.get("email") or "").strip().lower()
-    username = (data.get("username") or "").strip()
-    birthdate_raw = (data.get("birthdate") or "").strip()
-
-    if not all([first_name, last_name, email, username]):
-        return json_error("First name, last name, username, and email are required.", 400)
-
-    if len(first_name) > 50 or len(last_name) > 50:
-        return json_error("Names must be 50 characters or fewer.", 400)
-
-    if not EMAIL_RE.match(email) or len(email) > 254:
-        return json_error("Please enter a valid email address.", 400)
-
-    if not USERNAME_RE.match(username):
-        return json_error('Username must be 3-30 characters (letters, numbers, ".", "_" or "-").', 400)
-
-    birthdate = None
-    if birthdate_raw:
-        try:
-            birthdate = date.fromisoformat(birthdate_raw)
-        except ValueError:
-            birthdate = parse_birthdate(birthdate_raw)
-
-        if birthdate is None:
-            return json_error("Please enter a valid birthdate.", 400)
-        if birthdate > date.today():
-            return json_error("Birthdate cannot be in the future.", 400)
-        if age_from(birthdate) < MIN_AGE:
-            return json_error(f"You must be at least {MIN_AGE} years old.", 400)
-
-    if User.query.filter(User.email == email, User.id != user.id).first():
-        return json_error("That email is already in use by another account.", 409)
-
-    if User.query.filter(func.lower(User.username) == username.lower(), User.id != user.id).first():
-        return json_error("That username is already taken.", 409)
-
-    try:
-        user.first_name = first_name
-        user.last_name = last_name
-        user.email = email
-        user.username = username
-        user.birthdate = birthdate
-        db.session.commit()
-    except Exception as error:
-        db.session.rollback()
-        print("Profile update error:", error)
-        return json_error("Failed to update profile.", 500)
-
-    return jsonify({
-        "success": True,
-        "message": "Profile updated successfully!",
-        "user": user.to_dict()
-    })
-
-
-# Change password
-@app.route("/api/profile/password", methods=["PUT"])
-@login_required
-def update_password():
-    user = db.session.get(User, session["user_id"])
-    if user is None:
-        session.clear()
-        return json_error("User not found.", 404)
-
-    data = request.get_json(silent=True) or {}
-    current_password = data.get("currentPassword") or ""
-    new_password = data.get("newPassword") or ""
-
-    if not current_password or not new_password:
-        return json_error("Please fill in all password fields.", 400)
-
-    if not check_password_hash(user.password_hash, current_password):
-        return json_error("Current password is incorrect.", 401)
-
-    if not (8 <= len(new_password) <= 128) or not re.search(r"[a-zA-Z]", new_password) or not re.search(r"[0-9]", new_password):
-        return json_error("New password must be at least 8 characters with letters & numbers.", 400)
-
-    try:
-        user.password_hash = generate_password_hash(new_password)
-        db.session.commit()
-    except Exception as error:
-        db.session.rollback()
-        print("Password update error:", error)
-        return json_error("Failed to update password.", 500)
-
-    return jsonify({"success": True, "message": "Password updated successfully!"})
-
-
-# Upload profile picture
-@app.route("/api/profile/avatar", methods=["POST"])
-@login_required
-def upload_avatar():
-    user = db.session.get(User, session["user_id"])
-    if user is None:
-        return json_error("User not found.", 404)
-
-    if "avatar" not in request.files:
-        return json_error("No image provided.", 400)
-
-    file = request.files["avatar"]
-    if file.filename == "" or not allowed_file(file.filename):
-        return json_error("Please upload JPG, JPEG, PNG, or WEBP.", 400)
-
-    temp_path = None
-    try:
-        suffix = Path(secure_filename(file.filename)).suffix.lower()
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
-            temp_path = temp_file.name
-            file.save(temp_path)
-
-        user.avatar = make_thumbnail(temp_path, max_size=300)
-        db.session.commit()
-
-        return jsonify({
-            "success": True,
-            "avatar_url": f"/api/users/{user.id}/avatar?t={int(time.time())}"
-        })
-    except Exception as error:
-        db.session.rollback()
-        print("Avatar upload error:", error)
-        return json_error("Failed to upload avatar.", 500)
-    finally:
-        if temp_path and os.path.exists(temp_path):
-            os.remove(temp_path)
-
-
-# Serve user's profile picture
-@app.route("/api/users/<int:user_id>/avatar")
-def get_user_avatar(user_id):
-    user = db.session.get(User, user_id)
-    if user is None or not user.avatar:
-        return json_error("Avatar not found.", 404)
-    return Response(user.avatar, mimetype="image/jpeg")
-
-# ----------------------------------------------------------
-# EMOTION ANALYSIS
-# ----------------------------------------------------------
-
 # Analyze facial expression and save the result
 @app.route("/api/analyze", methods=["POST"])
 def analyze_emotion():
@@ -641,52 +302,23 @@ def analyze_emotion():
             temp_path = temp_file.name
             image.save(temp_path)
 
-        # Analyze the uploaded image
-        result = DeepFace.analyze(
-            img_path=temp_path,
-            actions=["emotion"],
-            enforce_detection=True
-        )
+        # 1. Read the photo, 2. find and crop the face,
+        # 3. let OUR model predict the emotion.
+        photo = read_photo_as_bgr(temp_path)
+        face = crop_face(photo)
+        probabilities = predict_emotion(face)
 
-        # DeepFace may return a list of face results
-        if isinstance(result, list):
-            if len(result) == 0:
-                return jsonify({
-                    "error": "No face was detected."
-                }), 400
+        # Pick the emotion with the highest probability.
+        best_index = int(np.argmax(probabilities))
+        dominant_emotion = CLASS_NAMES[best_index]
+        emotion_score = round(float(probabilities[best_index]) * 100, 2)
 
-            result = result[0]
-
-        # Get emotion scores from DeepFace
-        emotions = result.get("emotion", {})
-
-        # EmotiScan supports only these emotions.
-        supported_emotions = [
-            "happy",
-            "angry",
-            "disgust",
-            "fear",
-            "neutral",
-            "sad",
-            "surprise"
-        ]
-
-        # Keep only the supported emotions.
-        filtered_emotions = {
-            emotion: float(emotions.get(emotion, 0))
-            for emotion in supported_emotions
+        all_scores = {
+            name: round(float(p) * 100, 2)
+            for name, p in zip(CLASS_NAMES, probabilities)
         }
 
-        # Select the emotion with the highest score.
-        dominant_emotion = max(
-            filtered_emotions,
-            key=filtered_emotions.get
-        )
-
-        # Get its confidence score.
-        emotion_score = round(float(filtered_emotions[dominant_emotion]), 2)
-
-        print("EMOTISCAN EMOTION SCORES:", filtered_emotions)
+        print("EMOTISCAN EMOTION SCORES:", all_scores)
         print("EMOTISCAN DETECTED EMOTION:", dominant_emotion)
 
         # Save the result and a small copy of the photo in the database.
@@ -703,6 +335,7 @@ def analyze_emotion():
             "id": scan.id,
             "emotion": dominant_emotion,
             "score": emotion_score,
+            "scores": all_scores,
             "message": "Facial expression analyzed successfully."
         })
 
