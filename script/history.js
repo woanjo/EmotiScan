@@ -35,9 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
         neutral: "NEUTRAL"
     };
 
-    // History data now comes from the backend (Neon database).
+    // History data comes from the backend (Neon database).
     // It starts empty and is filled by loadHistory().
     const historyData = [];
+
+    // Becomes true when the history could not be loaded from the server.
+    let loadError = false;
 
     let selectedItems = new Set();
     let currentModalItem = null;
@@ -117,7 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Convert one scan from the backend into the shape the cards use.
     function toHistoryItem(scan) {
-        const label = emotionLabels[scan.emotion] || scan.emotion.toUpperCase();
+        // Lowercase first, so "Happy" and "happy" both work.
+        const key = String(scan.emotion).toLowerCase();
+        const label = emotionLabels[key] || key.toUpperCase();
 
         return {
             dbId: scan.id,                       // real id in the database
@@ -145,10 +150,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const scans = await response.json();
 
+            loadError = false;
+            selectedItems.clear();   // old selections no longer match the new data
             historyData.length = 0;
             scans.forEach(scan => historyData.push(toHistoryItem(scan)));
         } catch (error) {
             console.error('Unable to load history:', error);
+            loadError = true;
             showToast('Unable to load history. Is the server running?', 'error');
         }
 
@@ -173,9 +181,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCards() {
         if (!historyGrid) return;
         historyGrid.innerHTML = '';
-        
+
         if (historyData.length === 0) {
-            historyGrid.innerHTML = '<p style="color: #4C444F; grid-column: 1/-1; text-align: center; padding: 40px;">No history logs found.</p>';
+            const emptyText = loadError
+                ? 'Could not load history. Please refresh the page.'
+                : 'No history logs found.';
+
+            historyGrid.innerHTML = `<p style="color: #4C444F; grid-column: 1/-1; text-align: center; padding: 40px;">${emptyText}</p>`;
             updateToolbarState();
             return;
         }
@@ -241,9 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateToolbarState() {
         if (!selectedCountEl || !deleteSelectedBtn || !selectAllCheckbox) return;
-        
+
         selectedCountEl.textContent = selectedItems.size;
-        
+
         if (selectedItems.size > 0) {
             deleteSelectedBtn.style.opacity = '1';
             deleteSelectedBtn.style.pointerEvents = 'auto';
@@ -324,16 +336,19 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(`Log ${id} deleted.`, 'success');
     }
 
-    // Modal display logic
+    // ========================================
+    // DETAIL MODAL
+    // ========================================
+
     function openModal(item) {
         currentModalItem = item;
         const color = emotionColorMap[item.emotion] || '#7D7480';
-        
+
         if (modalTimestamp) modalTimestamp.textContent = item.date;
         if (modalEmotionName) modalEmotionName.textContent = item.emotion;
         if (modalImage) modalImage.src = item.image;
         if (modalTitle) modalTitle.textContent = "Analysis Result";
-        
+
         if (modalDot) modalDot.style.backgroundColor = color;
         if (modalTimestampCircle) modalTimestampCircle.setAttribute('fill', color);
         if (modalPreviewCard) modalPreviewCard.style.borderColor = color;
@@ -362,6 +377,10 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModal();
         }
     });
+
+    // ========================================
+    // START
+    // ========================================
 
     // Verify session, update header, and load saved scans when the page opens.
     (async () => {
