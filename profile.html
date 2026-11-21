@@ -41,8 +41,8 @@
             </nav>
 
             <div class="user-profile-badge" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" style="cursor: pointer;">
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="User Avatar" class="user-avatar" id="headerUserAvatar" onerror="this.src='https://placehold.co/100x100/F4DAFF/794A98?text=JD'">
-                <span class="user-name" id="headerUserName">Jane Doe</span>
+                <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23F4DAFF'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23794A98'/%3E%3Cpath d='M20 88c0-17 13-28 30-28s30 11 30 28' fill='%23794A98'/%3E%3C/svg%3E" alt="User Avatar" class="user-avatar" id="headerUserAvatar">
+                <span class="user-name" id="headerUserName">Loading...</span>
             </div>
         </div>
     </header>
@@ -50,7 +50,7 @@
     <!-- Main Profile Content Area -->
     <div class="main-content">
         <div class="content-container">
-            
+
             <!-- Page Heading -->
             <div class="page-header-section">
                 <h1 class="page-title">My Profile</h1>
@@ -62,9 +62,9 @@
                 <div class="profile-left-info">
                     <div class="avatar-container">
                         <div class="avatar-wrapper">
-                            <img id="profileCardAvatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80" alt="Profile Avatar" />
+                            <img id="profileCardAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23F4DAFF'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23794A98'/%3E%3Cpath d='M20 88c0-17 13-28 30-28s30 11 30 28' fill='%23794A98'/%3E%3C/svg%3E" alt="Profile Avatar" />
                         </div>
-                        
+
                         <!-- Hidden file input directly launching device file manager -->
                         <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" />
                         <label for="avatarFileInput" class="avatar-badge-icon" title="Change Profile Picture">
@@ -72,10 +72,10 @@
                         </label>
                     </div>
                     <div class="profile-text-info">
-                        <div class="profile-display-name" id="profileCardName">Jane Doe</div>
+                        <div class="profile-display-name" id="profileCardName">Loading...</div>
                         <div class="member-since-row">
                             <img src="icons/member_since.svg" alt="Member Since Icon" class="icon-member-since" />
-                            <span class="member-since-text" id="memberSinceText">Member Since: October 2024</span>
+                            <span class="member-since-text" id="memberSinceText">Member Since: —</span>
                         </div>
                     </div>
                 </div>
@@ -101,35 +101,35 @@
                     <div class="form-field-group">
                         <label class="form-label">First Name</label>
                         <div class="form-input-wrapper">
-                            <div class="form-input-display" id="dispFirstName">Jane</div>
+                            <div class="form-input-display" id="dispFirstName">—</div>
                             <img src="icons/name.svg" alt="Name Icon" class="input-icon-img" />
                         </div>
                     </div>
                     <div class="form-field-group">
                         <label class="form-label">Last Name</label>
                         <div class="form-input-wrapper">
-                            <div class="form-input-display" id="dispLastName">Doe</div>
+                            <div class="form-input-display" id="dispLastName">—</div>
                             <img src="icons/name.svg" alt="Name Icon" class="input-icon-img" />
                         </div>
                     </div>
                     <div class="form-field-group">
                         <label class="form-label">Username</label>
                         <div class="form-input-wrapper">
-                            <div class="form-input-display" id="dispUsername">jane.doe</div>
+                            <div class="form-input-display" id="dispUsername">—</div>
                             <img src="icons/username.svg" alt="Username Icon" class="input-icon-img" />
                         </div>
                     </div>
                     <div class="form-field-group">
                         <label class="form-label">Birthdate</label>
                         <div class="form-input-wrapper">
-                            <div class="form-input-display" id="dispBirthdate">October 14, 2002</div>
+                            <div class="form-input-display" id="dispBirthdate">—</div>
                             <img src="icons/birthday.svg" alt="Birthday Icon" class="input-icon-img" />
                         </div>
                     </div>
                     <div class="form-field-group full-width">
                         <label class="form-label">Email</label>
                         <div class="form-input-wrapper">
-                            <div class="form-input-display" id="dispEmail">jane.doe@example.com</div>
+                            <div class="form-input-display" id="dispEmail">—</div>
                             <img src="icons/email.svg" alt="Email Icon" class="input-icon-img" />
                         </div>
                     </div>
@@ -183,14 +183,14 @@
                     <div class="form-field-group modal-flex-1">
                         <label class="form-label">First Name</label>
                         <div class="form-input-wrapper">
-                            <input type="text" id="inputFirstName" class="modal-input" placeholder="Jane" required />
+                            <input type="text" id="inputFirstName" class="modal-input" placeholder="First Name" required />
                             <img src="icons/name.svg" alt="Name Icon" class="input-icon-img" />
                         </div>
                     </div>
                     <div class="form-field-group modal-flex-1">
                         <label class="form-label">Last Name</label>
                         <div class="form-input-wrapper">
-                            <input type="text" id="inputLastName" class="modal-input" placeholder="Doe" required />
+                            <input type="text" id="inputLastName" class="modal-input" placeholder="Last Name" required />
                             <img src="icons/name.svg" alt="Name Icon" class="input-icon-img" />
                         </div>
                     </div>
@@ -198,14 +198,14 @@
                 <div class="form-field-group">
                     <label class="form-label">Username</label>
                     <div class="form-input-wrapper">
-                        <input type="text" id="inputUsername" class="modal-input" placeholder="jane.doe" required />
+                        <input type="text" id="inputUsername" class="modal-input" placeholder="Username" required />
                         <img src="icons/username.svg" alt="Username Icon" class="input-icon-img" />
                     </div>
                 </div>
                 <div class="form-field-group">
                     <label class="form-label">Email</label>
                     <div class="form-input-wrapper">
-                        <input type="email" id="inputEmail" class="modal-input" placeholder="jane.doe@example.com" required />
+                        <input type="email" id="inputEmail" class="modal-input" placeholder="Email" required />
                         <img src="icons/email.svg" alt="Email Icon" class="input-icon-img" />
                     </div>
                 </div>
