@@ -35,7 +35,6 @@ const headerUserAvatar = document.getElementById('headerUserAvatar');
 
 let currentUser = null;
 
-// Custom Toast Notification Helper
 function showToast(message, type = 'success') {
     let container = document.querySelector('.toast-container');
     if (!container) {
@@ -58,7 +57,6 @@ function showToast(message, type = 'success') {
     }, 3200);
 }
 
-// Format ISO dates nicely for display
 function formatBirthdate(isoDate) {
     if (!isoDate) return 'Not set';
     const [year, month, day] = isoDate.split('-');
@@ -66,16 +64,20 @@ function formatBirthdate(isoDate) {
     return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-function formatMemberSince(isoTimestamp) {
-    if (!isoTimestamp) return 'Member';
-    const dateObj = new Date(isoTimestamp);
-    return 'Member Since: ' + dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+function formatMemberSince(user) {
+    if (user?.member_since) {
+        return `Member Since: ${user.member_since}`;
+    }
+    if (user?.created_at) {
+        const dateObj = new Date(user.created_at);
+        return 'Member Since: ' + dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+    return 'Member Since: —';
 }
 
-// Populate UI with user data from backend
 function renderUser(user) {
     currentUser = user;
-    const fullName = `${user.first_name} ${user.last_name}`;
+    const fullName = `${user.first_name} ${user.last_name}`.trim();
 
     dispFirstName.textContent = user.first_name;
     dispLastName.textContent = user.last_name;
@@ -86,16 +88,16 @@ function renderUser(user) {
     profileCardName.textContent = fullName;
     headerUserName.textContent = fullName;
     if (memberSinceText) {
-        memberSinceText.textContent = formatMemberSince(user.created_at);
+        memberSinceText.textContent = formatMemberSince(user);
     }
 
-    const fallbackAvatar = `https://placehold.co/200x200/F4DAFF/794A98?text=${user.first_name[0]}${user.last_name[0]}`;
+    const initials = `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() || 'U';
+    const fallbackAvatar = `https://placehold.co/200x200/F4DAFF/794A98?text=${initials}`;
     const avatarSrc = user.avatar_url || fallbackAvatar;
     profileCardAvatar.src = avatarSrc;
     headerUserAvatar.src = avatarSrc;
 }
 
-// Fetch logged-in user on page load
 async function loadProfile() {
     try {
         const res = await fetch('/api/me');
@@ -114,6 +116,18 @@ async function loadProfile() {
 
 document.addEventListener('DOMContentLoaded', loadProfile);
 
+// Show/hide password fields via eye button
+document.querySelectorAll('.toggle-password-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        if (!input) return;
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.classList.toggle('active', isHidden);
+        btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    });
+});
+
 // Profile Picture Upload Handler
 avatarFileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -129,28 +143,31 @@ avatarFileInput.addEventListener('change', async (e) => {
         });
         const data = await res.json();
 
-        if (!res.ok) {
+        if (!res.ok || !data.success) {
             showToast(data.error || 'Failed to upload profile picture.', 'error');
             return;
         }
 
+        if (currentUser && data.avatar_url) {
+            currentUser.avatar_url = data.avatar_url;
+        }
         profileCardAvatar.src = data.avatar_url;
         headerUserAvatar.src = data.avatar_url;
         showToast('Profile picture updated!');
     } catch (err) {
         console.error(err);
         showToast('Network error while uploading picture.', 'error');
+    } finally {
+        avatarFileInput.value = '';
     }
 });
 
-// Modal helpers
 function closeAllModals() {
     editModal.classList.remove('active');
     passwordModal.classList.remove('active');
     logoutModal.classList.remove('active');
 }
 
-// Pre-fill Edit Profile inputs when opening modal
 openEditBtn.addEventListener('click', () => {
     closeAllModals();
     if (currentUser) {
@@ -190,7 +207,6 @@ window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeAllModals();
 });
 
-// Edit Profile Form Submission
 document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -210,7 +226,7 @@ document.getElementById('editProfileForm').addEventListener('submit', async (e) 
         });
         const data = await res.json();
 
-        if (!res.ok) {
+        if (!res.ok || !data.success) {
             showToast(data.error || 'Could not update profile.', 'error');
             return;
         }
@@ -224,15 +240,24 @@ document.getElementById('editProfileForm').addEventListener('submit', async (e) 
     }
 });
 
-// Change Password Form Submission
+function isStrongPassword(password) {
+    return (
+        password.length >= 8 &&
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /\d/.test(password) &&
+        /[^A-Za-z0-9]/.test(password)
+    );
+}
+
 document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const currentPassword = document.getElementById('currentPassword').value;
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
 
-    if (newPassword.length < 8 || !/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
-        showToast('Password must be at least 8 characters with letters & numbers.', 'error');
+    if (!isStrongPassword(newPassword)) {
+        showToast('Password must be 8+ chars with uppercase, lowercase, a number, and a special character.', 'error');
         return;
     }
 
@@ -249,7 +274,7 @@ document.getElementById('changePasswordForm').addEventListener('submit', async (
         });
         const data = await res.json();
 
-        if (!res.ok) {
+        if (!res.ok || !data.success) {
             showToast(data.error || 'Could not update password.', 'error');
             return;
         }
@@ -263,7 +288,6 @@ document.getElementById('changePasswordForm').addEventListener('submit', async (
     }
 });
 
-// Confirm Logout Action
 confirmLogoutBtn.addEventListener('click', async () => {
     try {
         await fetch('/api/logout', { method: 'POST' });

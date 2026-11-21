@@ -83,11 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.user) {
                 const user = data.user;
                 const fullName = `${user.first_name} ${user.last_name}`;
-                const initials = `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}` || 'U';
-                const fallbackAvatar = `https://placehold.co/100x100/F4DAFF/794A98?text=${initials}`;
+                const initials = `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() || 'U';
+                    const fallbackAvatar =
+                        "data:image/svg+xml;utf8," +
+                        encodeURIComponent(
+                            `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23F4DAFF'/><text x='50' y='58' text-anchor='middle' font-family='Inter,sans-serif' font-size='36' font-weight='700' fill='%23794A98'>${initials}</text></svg>`
+                        );
 
-                if (headerName) headerName.textContent = fullName;
-                if (headerAvatar) headerAvatar.src = user.avatar_url || fallbackAvatar;
+                    if (headerName) headerName.textContent = fullName;
+                    if (headerAvatar) headerAvatar.src = user.avatar_url || fallbackAvatar;
             }
             return true;
         } catch (err) {

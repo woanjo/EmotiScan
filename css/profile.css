@@ -51,7 +51,7 @@ body {
     gap: 12px;
     text-decoration: none;
     flex-shrink: 0;
-    width: 180px; /* Locked width so navbar stays perfectly aligned */
+    width: 180px;
 }
 
 .header-logo {
@@ -125,7 +125,6 @@ body {
     mask-image: url('../icons/navbar_history.svg');
 }
 
-/* Hover & Pressed States */
 .nav-item:hover {
     color: #794A98;
 }
@@ -157,7 +156,7 @@ body {
     border-radius: 9999px;
     outline: 1.5px solid #D8B4FE; 
     flex-shrink: 0;
-    width: auto; /* Fits to content automatically */
+    width: auto;
     box-sizing: border-box;
     transition: transform 0.15s ease, background-color 0.2s ease;
 }
@@ -208,7 +207,6 @@ body {
     display: flex;
 }
 
-/* Page Title */
 .page-header-section {
     align-self: stretch;
     padding-bottom: 8px;
@@ -219,11 +217,15 @@ body {
 }
 
 .page-title {
-    color: #161C28;
-    font-size: 32px;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 600;
-    line-height: 40px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 44px;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #794A98 0%, #B06AB3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .page-subtitle {
@@ -234,7 +236,6 @@ body {
     line-height: 20px;
 }
 
-/* Profile Card Banner */
 .profile-card {
     align-self: stretch;
     padding: 32px;
@@ -394,7 +395,6 @@ body {
     letter-spacing: 0.24px;
 }
 
-/* Account Details Box */
 .card-box {
     align-self: stretch;
     padding: 32px;
@@ -432,7 +432,6 @@ body {
     line-height: 20px;
 }
 
-/* Form Fields Grid Layout */
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -478,17 +477,6 @@ body {
     line-height: 24px;
 }
 
-.input-icon {
-    position: absolute;
-    left: 15.5px;
-    width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Account Session Box */
 .session-box {
     display: flex;
     flex-direction: column;
@@ -651,6 +639,45 @@ body {
 
 .modal-input:focus {
     outline: 2px solid #794A98;
+}
+
+.form-input-wrapper.has-toggle .password-input {
+    padding-right: 40px;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 6px;
+    color: #4C444F;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.toggle-password-btn:hover {
+    opacity: 1;
+    color: #794A98;
+    background: rgba(121, 74, 152, 0.08);
+}
+
+.toggle-password-btn.active {
+    opacity: 1;
+    color: #794A98;
+}
+
+.eye-svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
 }
 
 .modal-footer {
