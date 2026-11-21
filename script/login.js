@@ -140,54 +140,39 @@ if (toggleLoginPassword && loginPassword) {
 }
 
 
-/* 5. LOGIN FORM (connected to the Flask backend) */
+/* 5. LOGIN FORM */
 
 if (loginForm) {
-    const loginButton = loginForm.querySelector(".btn-primary");
-
     loginForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
-        const identifier = document.getElementById("loginUsername").value.trim();
+        const username = document.getElementById("loginUsername").value.trim();
         const password = loginPassword.value;
 
-        if (!identifier || !password) {
+        if (!username || !password) {
             alert("Please enter your username and password.");
             return;
-        }
-
-        // Prevent double submits while waiting for the server.
-        if (loginButton) {
-            loginButton.disabled = true;
         }
 
         try {
             const response = await fetch("/api/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                credentials: "same-origin",
-                body: JSON.stringify({ identifier: identifier, password: password })
+                body: JSON.stringify({ username, password })
             });
 
-            const data = await response.json().catch(function () {
-                return {};
-            });
+            const data = await response.json();
 
-            if (!response.ok) {
+            if (!response.ok || !data.success) {
                 alert(data.error || "Login failed. Please try again.");
-                loginPassword.value = "";
-                loginPassword.focus();
                 return;
             }
 
-            // Success: open the main page.
-            window.location.href = HOME_PAGE;
+            window.location.href = "dashboard.html";
+
         } catch (error) {
-            alert("Could not reach the server. Please try again.");
-        } finally {
-            if (loginButton) {
-                loginButton.disabled = false;
-            }
+            console.error("Login error:", error);
+            alert("Cannot connect to the server. Check that Flask is running.");
         }
     });
 }

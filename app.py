@@ -2,28 +2,38 @@ import os
 
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 
-from flask import Flask, jsonify, request, send_from_directory, Response
+from flask import Flask, jsonify, request, send_from_directory, Response, session
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
+from functools import wraps
 from deepface import DeepFace
 import keras
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from PIL import Image, ImageOps
 import numpy as np
 import cv2
 import tempfile
 import json
 import io
+import re
 
-# Load DATABASE_URL from the .env file
+# Load DATABASE_URL and SECRET_KEY from the .env file
 load_dotenv()
 
 # Initialize Flask
 app = Flask(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
+
+# ==========================================================
+# SECURITY / SESSIONS
+# ==========================================================
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or os.urandom(32).hex()
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 # ==========================================================
 # DATABASE (Neon PostgreSQL)
@@ -51,12 +61,43 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 db = SQLAlchemy(app)
 
 
+class User(db.Model):
+    """One registered EmotiScan account."""
+
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(60), nullable=False)
+    last_name = db.Column(db.String(60), nullable=False)
+    birthdate = db.Column(db.Date, nullable=True)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    username = db.Column(db.String(40), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "username": self.username,
+            "email": self.email,
+            "birthdate": self.birthdate.isoformat() if self.birthdate else None,
+            "member_since": self.created_at.strftime("%B %Y"),
+        }
+
+
 class Scan(db.Model):
     """One emotion analysis result, with a small copy of the photo."""
 
     __tablename__ = "scans"
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     emotion = db.Column(db.String(20), nullable=False)
     score = db.Column(db.Float, nullable=False)
     image = db.Column(db.LargeBinary, nullable=False)   # JPEG thumbnail
@@ -77,6 +118,9 @@ class Scan(db.Model):
 
 
 # Create the tables in Neon if they do not exist yet.
+# NOTE: create_all() does NOT add user_id to an existing "scans" table.
+# Run this once in the Neon SQL editor (or drop "scans" if it only has tests):
+#   ALTER TABLE scans ADD COLUMN user_id INTEGER REFERENCES users(id);
 with app.app_context():
     db.create_all()
 
@@ -222,10 +266,34 @@ def make_thumbnail(path, max_size=400):
 
 
 # ==========================================================
+# LOGIN HELPERS
+# ==========================================================
+
+def login_required(view):
+    """Block the route unless the user is logged in."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return jsonify({"success": False, "error": "Please log in."}), 401
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def is_strong_password(password):
+    return bool(
+        len(password) >= 8
+        and re.search(r"[A-Z]", password)
+        and re.search(r"[a-z]", password)
+        and re.search(r"\d", password)
+        and re.search(r"[^A-Za-z0-9]", password)
+    )
+
+
+# ==========================================================
 # FRONTEND FILES
 # ==========================================================
 
-# Homepage
+# Homepage (login page)
 @app.route("/")
 def home():
     return send_from_directory(BASE_DIR, "index.html")
@@ -250,7 +318,7 @@ def frontend_files(filename):
 
 
 # ==========================================================
-# API ROUTES
+# API ROUTES: ACCOUNTS
 # ==========================================================
 
 # Backend status
@@ -262,8 +330,135 @@ def backend_status():
     })
 
 
+# Create a new account
+@app.route("/api/register", methods=["POST"])
+def register():
+    data = request.get_json(silent=True) or {}
+
+    first = (data.get("first_name") or "").strip()
+    last = (data.get("last_name") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    username = (data.get("username") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not (first and last and email and username and password):
+        return jsonify({
+            "success": False,
+            "error": "Please fill in all required fields."
+        }), 400
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        return jsonify({
+            "success": False,
+            "error": "Please enter a valid email address."
+        }), 400
+
+    if not is_strong_password(password):
+        return jsonify({
+            "success": False,
+            "error": (
+                "Password needs 8+ characters with uppercase, "
+                "lowercase, a number and a special character."
+            )
+        }), 400
+
+    # Birthdate must be sent as YYYY-MM-DD (convert it in register.js).
+    birthdate = None
+    if data.get("birthdate"):
+        try:
+            birthdate = date.fromisoformat(data["birthdate"])
+        except ValueError:
+            return jsonify({
+                "success": False,
+                "error": "Invalid birthdate."
+            }), 400
+
+        if birthdate >= date.today():
+            return jsonify({
+                "success": False,
+                "error": "Birthdate must be in the past."
+            }), 400
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({
+            "success": False,
+            "error": "Username is already taken."
+        }), 409
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({
+            "success": False,
+            "error": "Email is already registered."
+        }), 409
+
+    user = User(
+        first_name=first,
+        last_name=last,
+        birthdate=birthdate,
+        email=email,
+        username=username,
+        password_hash=generate_password_hash(password),
+    )
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Account created. You can log in now."
+    }), 201
+
+
+# Log in with username OR email
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True) or {}
+
+    identifier = (data.get("username") or "").strip().lower()
+    password = data.get("password") or ""
+
+    user = User.query.filter(
+        (User.username == identifier) | (User.email == identifier)
+    ).first()
+
+    if not user or not check_password_hash(user.password_hash, password):
+        return jsonify({
+            "success": False,
+            "error": "Incorrect username or password."
+        }), 401
+
+    session.clear()
+    session["user_id"] = user.id
+
+    return jsonify({"success": True, "user": user.to_dict()})
+
+
+# Log out
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"success": True})
+
+
+# Current logged-in user (for Profile and the navbar)
+@app.route("/api/me")
+@login_required
+def me():
+    user = db.session.get(User, session["user_id"])
+
+    if user is None:
+        session.clear()
+        return jsonify({"success": False, "error": "Please log in."}), 401
+
+    return jsonify({"success": True, "user": user.to_dict()})
+
+
+# ==========================================================
+# API ROUTES: SCANS
+# ==========================================================
+
 # Analyze facial expression and save the result
 @app.route("/api/analyze", methods=["POST"])
+@login_required
 def analyze_emotion():
 
     # Check if an image was uploaded
@@ -321,8 +516,9 @@ def analyze_emotion():
         print("EMOTISCAN EMOTION SCORES:", all_scores)
         print("EMOTISCAN DETECTED EMOTION:", dominant_emotion)
 
-        # Save the result and a small copy of the photo in the database.
+        # Save the result and a small copy of the photo for this user.
         scan = Scan(
+            user_id=session["user_id"],
             emotion=dominant_emotion,
             score=emotion_score,
             image=make_thumbnail(temp_path),
@@ -376,19 +572,26 @@ def analyze_emotion():
             os.remove(temp_path)
 
 
-# List all saved scans (newest first) for the History page
+# List the logged-in user's scans (newest first) for the History page
 @app.route("/api/history")
+@login_required
 def get_history():
-    scans = Scan.query.order_by(Scan.created_at.desc()).all()
+    scans = (
+        Scan.query
+        .filter_by(user_id=session["user_id"])
+        .order_by(Scan.created_at.desc())
+        .all()
+    )
     return jsonify([scan.to_dict() for scan in scans])
 
 
 # Show the saved photo of one scan
 @app.route("/api/scans/<int:scan_id>/image")
+@login_required
 def get_scan_image(scan_id):
     scan = db.session.get(Scan, scan_id)
 
-    if scan is None:
+    if scan is None or scan.user_id != session["user_id"]:
         return jsonify({"error": "Scan not found."}), 404
 
     return Response(scan.image, mimetype="image/jpeg")
@@ -396,10 +599,11 @@ def get_scan_image(scan_id):
 
 # Delete one scan (and its photo)
 @app.route("/api/scans/<int:scan_id>", methods=["DELETE"])
+@login_required
 def delete_scan(scan_id):
     scan = db.session.get(Scan, scan_id)
 
-    if scan is None:
+    if scan is None or scan.user_id != session["user_id"]:
         return jsonify({"error": "Scan not found."}), 404
 
     db.session.delete(scan)
@@ -417,5 +621,6 @@ def file_too_large(error):
 
 
 # Start Flask
+# use_reloader=False stops the model from loading twice in debug mode.
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
