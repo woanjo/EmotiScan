@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from dotenv import load_dotenv
 from pathlib import Path
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, timedelta
 from functools import wraps
 from deepface import DeepFace
 import keras
@@ -21,6 +21,11 @@ import tempfile
 import json
 import io
 import re
+import hashlib
+import hmac
+import secrets
+import urllib.request
+import urllib.error
 
 # Load DATABASE_URL and SECRET_KEY from the .env file
 load_dotenv()
@@ -122,11 +127,32 @@ class Scan(db.Model):
         }
 
 
+class PasswordReset(db.Model):
+    """One active password-reset request per user (OTP code + reset token)."""
+
+    __tablename__ = "password_resets"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    code_hash = db.Column(db.String(64), nullable=True)      # hashed 6-digit code
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    attempts = db.Column(db.Integer, default=0, nullable=False)
+    last_sent_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    token_hash = db.Column(db.String(64), nullable=True)     # hashed reset token
+    token_expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+
 # Create the tables in Neon if they do not exist yet.
 # NOTE: create_all() does NOT add columns to existing tables.
 # If needed in Neon SQL editor:
 #   ALTER TABLE scans ADD COLUMN user_id INTEGER REFERENCES users(id);
 #   ALTER TABLE users ADD COLUMN avatar BYTEA;
+# (The new password_resets table is created automatically.)
 with app.app_context():
     db.create_all()
 
@@ -480,6 +506,218 @@ def me():
         return jsonify({"success": False, "error": "Please log in."}), 401
 
     return jsonify({"success": True, "user": user.to_dict()})
+
+
+# ==========================================================
+# API ROUTES: FORGOT PASSWORD (email OTP sent through Resend)
+# Flow: /api/forgot-password -> /api/verify-code -> /api/reset-password
+#       (/api/resend-code powers the 60-second "Resend Code" link)
+#
+# Needs in .env:
+#   RESEND_API_KEY=re_xxxxxxxx
+#   MAIL_FROM=EmotiScan <noreply@emotiscan.tryfitcheck.lol>
+# Without RESEND_API_KEY the code is printed in the terminal (dev mode).
+# ==========================================================
+
+RESET_CODE_TTL = timedelta(minutes=10)     # how long the emailed code works
+RESET_TOKEN_TTL = timedelta(minutes=10)    # time allowed to type the new password
+RESEND_COOLDOWN_S = 60                     # matches the 60s countdown in the UI
+MAX_CODE_ATTEMPTS = 5                      # wrong tries before the code is burned
+
+
+def _hash_secret(value):
+    """HMAC so codes/tokens are never stored in plain text."""
+    return hmac.new(
+        app.config["SECRET_KEY"].encode(), value.encode(), hashlib.sha256
+    ).hexdigest()
+
+
+def _cooldown_left(row):
+    elapsed = (datetime.now(timezone.utc) - row.last_sent_at).total_seconds()
+    return max(0, RESEND_COOLDOWN_S - int(elapsed))
+
+
+def send_reset_email(to_email, code):
+    """Send the OTP through Resend's HTTP API."""
+    api_key = os.getenv("RESEND_API_KEY")
+    if not api_key:
+        print(f"[DEV] Password reset code for {to_email}: {code}")   # no key set
+        return
+
+    payload = {
+        "from": os.getenv("MAIL_FROM", "EmotiScan <noreply@emotiscan.tryfitcheck.lol>"),
+        "to": [to_email],
+        "subject": "Your EmotiScan password reset code",
+        "text": (
+            f"Your verification code is {code}. It expires in 10 minutes. "
+            "If you did not request this, you can ignore this email."
+        ),
+        "html": f"""
+            <div style="font-family:Arial,sans-serif;max-width:420px;margin:auto">
+              <h2>Reset your password</h2>
+              <p>Your verification code is:</p>
+              <h1 style="letter-spacing:8px">{code}</h1>
+              <p>It expires in 10 minutes. If you did not request this,
+                 you can ignore this email.</p>
+            </div>""",
+    }
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            # Resend/Cloudflare can reject Python's default User-Agent with a 403
+            "User-Agent": "EmotiScan/1.0",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            print(f"[MAIL] Resend accepted email to {to_email}: {resp.status} {resp.read().decode()}")
+    except urllib.error.HTTPError as err:
+        raise RuntimeError(f"Resend {err.code}: {err.read().decode()}")
+
+
+def _send_reset_code(email):
+    """Create/refresh the code and email it. Returns seconds until next resend.
+    Same result whether or not the email exists (no account enumeration)."""
+    user = User.query.filter(func.lower(User.email) == email).first()
+    if user is None:
+        print(f"[RESET] No account with email {email}, so nothing was sent.")
+        return RESEND_COOLDOWN_S
+
+    row = PasswordReset.query.filter_by(user_id=user.id).first()
+    if row and _cooldown_left(row) > 0:
+        print(f"[RESET] Cooldown active for {email}: {_cooldown_left(row)}s left, nothing sent.")
+        return _cooldown_left(row)
+
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    now = datetime.now(timezone.utc)
+
+    if row is None:
+        row = PasswordReset(user_id=user.id, expires_at=now, last_sent_at=now)
+        db.session.add(row)
+
+    row.code_hash = _hash_secret(f"{email}:{code}")
+    row.expires_at = now + RESET_CODE_TTL
+    row.attempts = 0
+    row.last_sent_at = now
+    row.token_hash = None
+    row.token_expires_at = None
+    db.session.commit()
+
+    send_reset_email(user.email, code)
+    return RESEND_COOLDOWN_S
+
+
+# Screen 1 "Send Code"  and  Screen 2 "Resend Code"
+@app.route("/api/forgot-password", methods=["POST"])
+@app.route("/api/resend-code", methods=["POST"])
+def forgot_password():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+
+    if not EMAIL_RE.match(email):
+        return json_error("Please enter a valid email address.", 400)
+
+    try:
+        resend_in = _send_reset_code(email)
+    except Exception as error:
+        db.session.rollback()
+        print("Reset email error:", error)
+        return json_error("Could not send the email. Please try again.", 500)
+
+    return jsonify({
+        "success": True,
+        "message": "If that email is registered, a 6-digit code has been sent.",
+        "resendIn": resend_in,
+    })
+
+
+# Screen 2 "Verify Code"
+@app.route("/api/verify-code", methods=["POST"])
+def verify_code():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    code = str(data.get("code") or "").strip()
+
+    if not re.fullmatch(r"\d{6}", code):
+        return json_error("Enter the 6-digit code.", 400)
+
+    user = User.query.filter(func.lower(User.email) == email).first()
+    row = PasswordReset.query.filter_by(user_id=user.id).first() if user else None
+    now = datetime.now(timezone.utc)
+
+    if row is None or not row.code_hash or now > row.expires_at:
+        return json_error("Invalid or expired code.", 400)
+
+    if row.attempts >= MAX_CODE_ATTEMPTS:
+        db.session.delete(row)
+        db.session.commit()
+        return json_error("Too many attempts. Please request a new code.", 429)
+
+    if not hmac.compare_digest(row.code_hash, _hash_secret(f"{email}:{code}")):
+        row.attempts += 1
+        db.session.commit()
+        return json_error("Invalid or expired code.", 400)
+
+    # Correct code: burn it and give back a short-lived, single-use reset token.
+    reset_token = secrets.token_hex(32)
+    row.code_hash = None
+    row.token_hash = _hash_secret(reset_token)
+    row.token_expires_at = now + RESET_TOKEN_TTL
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Code verified.",
+        "resetToken": reset_token,
+    })
+
+
+# Screen 3 "Reset"
+@app.route("/api/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    reset_token = data.get("resetToken") or ""
+    new_password = data.get("newPassword") or ""
+    confirm_password = data.get("confirmPassword") or ""
+
+    user = User.query.filter(func.lower(User.email) == email).first()
+    row = PasswordReset.query.filter_by(user_id=user.id).first() if user else None
+
+    if (
+        row is None
+        or not row.token_hash
+        or datetime.now(timezone.utc) > row.token_expires_at
+        or not hmac.compare_digest(row.token_hash, _hash_secret(reset_token))
+    ):
+        return json_error("Reset session expired. Please start again.", 400)
+
+    if new_password != confirm_password:
+        return json_error("Passwords do not match.", 400)
+
+    if not is_strong_password(new_password):
+        return json_error(
+            "Password needs 8+ characters with uppercase, lowercase, "
+            "a number and a special character.", 400,
+        )
+
+    try:
+        user.password_hash = generate_password_hash(new_password)
+        db.session.delete(row)          # token is single-use
+        db.session.commit()
+    except Exception as error:
+        db.session.rollback()
+        print("Reset password error:", error)
+        return json_error("Failed to reset password.", 500)
+
+    return jsonify({
+        "success": True,
+        "message": "Password reset successful. You can log in now.",
+    })
 
 
 # ==========================================================

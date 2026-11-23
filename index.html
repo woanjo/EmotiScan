@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;700&family=Playfair+Display:wght@700&family=Liberation+Serif:wght@700&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="css/login.css">
-    <script src="script/login.js" defer></script>
 </head>
 <body>
 
@@ -216,7 +215,7 @@
                 <h3 class="modal-title">Reset Password</h3>
 
                 <p class="modal-desc">
-                    Enter your registered email address to receive a password reset link
+                    Enter your registered email address to receive a 6-digit verification code
                 </p>
             </div>
 
@@ -243,7 +242,7 @@
             <button
                 type="button"
                 class="btn-primary"
-                data-switch-modal="modalVerifyCode"
+                id="sendCodeButton"
             >
                 <span>Send Code</span>
                 <img src="icons/arrow.svg" alt="Arrow Icon">
@@ -294,13 +293,13 @@
             <div class="resend-row">
                 <span>Didn't receive the code?</span>
                 <a href="#" class="resend-link" id="resendCode">Resend Code</a>
-                <span class="resend-timer" id="resendTimer">(0:45)</span>
+                <span class="resend-timer" id="resendTimer"></span>
             </div>
 
             <button
                 type="button"
                 class="btn-primary"
-                data-switch-modal="modalNewPassword"
+                id="verifyCodeButton"
             >
                 <span>Verify Code</span>
                 <img src="icons/arrow.svg" alt="Arrow Icon">
@@ -403,6 +402,13 @@
 
         </div>
     </div>
+    
+    <!-- Hidden helpers: forgot-password.js clicks these so login.js switches/closes the modals for us -->
+    <button type="button" id="goVerify" data-switch-modal="modalVerifyCode" hidden></button>
+    <button type="button" id="goNewPassword" data-switch-modal="modalNewPassword" hidden></button>
+    <button type="button" id="closeAllModals" data-close-modals hidden></button>
 
+    <script src="script/login.js" defer></script>
+    <script src="script/forgot_pass.js"></script>
 </body>
 </html>
