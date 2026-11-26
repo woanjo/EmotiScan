@@ -1,6 +1,7 @@
 Flask
 deepface
 tf-keras
+keras
 flask-sqlalchemy
 psycopg2-binary
 python-dotenv
