@@ -1,6 +1,6 @@
 {
-  "img_size": 128,
-  "backbone": "mobilenetv2",
+  "img_size": 160,
+  "backbone": "efficientnetb0",
   "classes": [
     "angry",
     "disgust",
