@@ -621,14 +621,15 @@ body {
 
 .emotion-legend-grid {
     display: flex;
-    width: 100%;
-    max-width: 460px;
-    flex-wrap: wrap;
+    width: fit-content;
+    max-width: 100%;
+    flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
-    gap: 5px;
-    margin: 0 0 32px;
-    padding: 5px;
+    gap: 6px;
+    margin: 0 auto 32px;
+    padding: 5px 8px;
+    overflow-x: auto;
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.8);
     border-radius: 30px;
@@ -639,15 +640,16 @@ body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 6px 9px;
+    padding: 6px 10px;
     background: transparent;
     color: #45404a;
     border: 1px solid transparent;
     border-radius: 20px;
     font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 400;
+    font-size: 11px;
+    font-weight: 500;
     white-space: nowrap;
+    flex-shrink: 0;
     transition: background 0.2s ease, border-color 0.2s ease;
 }
 
