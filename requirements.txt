@@ -1,6 +1,7 @@
 Flask
 gunicorn
-tf-keras
+tensorflow-cpu==2.18.0
+numpy<2.1
 flask-sqlalchemy
 psycopg[binary]
 python-dotenv
