@@ -84,14 +84,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const user = data.user;
                 const fullName = `${user.first_name} ${user.last_name}`;
                 const initials = `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() || 'U';
-                    const fallbackAvatar =
-                        "data:image/svg+xml;utf8," +
-                        encodeURIComponent(
-                            `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23F4DAFF'/><text x='50' y='58' text-anchor='middle' font-family='Inter,sans-serif' font-size='36' font-weight='700' fill='%23794A98'>${initials}</text></svg>`
-                        );
+                const fallbackAvatar =
+                    "data:image/svg+xml;utf8," +
+                    encodeURIComponent(
+                        `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23F4DAFF'/><text x='50' y='58' text-anchor='middle' font-family='Inter,sans-serif' font-size='36' font-weight='700' fill='%23794A98'>${initials}</text></svg>`
+                    );
 
-                    if (headerName) headerName.textContent = fullName;
-                    if (headerAvatar) headerAvatar.src = user.avatar_url || fallbackAvatar;
+                if (headerName) headerName.textContent = fullName;
+                if (headerAvatar) headerAvatar.src = user.avatar_url || fallbackAvatar;
             }
             return true;
         } catch (err) {
@@ -124,17 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Convert one scan from the backend into the shape the cards use.
     function toHistoryItem(scan) {
-        // Lowercase first, so "Happy" and "happy" both work.
         const key = String(scan.emotion).toLowerCase();
         const label = emotionLabels[key] || key.toUpperCase();
 
         return {
-            dbId: scan.id,                       // real id in the database
-            id: `LOG #${scan.id}`,               // text shown on the card
+            dbId: scan.id,
             emotion: label,
             date: formatDate(scan.created_at),
             variant: `variant-${label.toLowerCase()}`,
-            image: scan.image_url                // /api/scans/<id>/image
+            image: scan.image_url
         };
     }
 
@@ -155,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const scans = await response.json();
 
             loadError = false;
-            selectedItems.clear();   // old selections no longer match the new data
+            selectedItems.clear();
             historyData.length = 0;
             scans.forEach(scan => historyData.push(toHistoryItem(scan)));
         } catch (error) {
@@ -189,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (historyData.length === 0) {
             const emptyText = loadError
                 ? 'Could not load history. Please refresh the page.'
-                : 'No history logs found.';
+                : 'No scan history found.';
 
             historyGrid.innerHTML = `<p style="color: #4C444F; grid-column: 1/-1; text-align: center; padding: 40px;">${emptyText}</p>`;
             updateToolbarState();
@@ -197,16 +195,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         historyData.forEach(item => {
-            const isSelected = selectedItems.has(item.id);
+            const isSelected = selectedItems.has(item.dbId);
             const emotionColor = emotionColorMap[item.emotion] || '#7D7480';
             const card = document.createElement('div');
             card.className = `history-card ${item.variant}`;
             card.innerHTML = `
                 <div class="card-header">
-                    <div class="checkbox card-checkbox ${isSelected ? 'checked' : ''}" data-id="${item.id}"></div>
-                    <div class="card-id">${item.id}</div>
+                    <div class="checkbox card-checkbox ${isSelected ? 'checked' : ''}" data-id="${item.dbId}"></div>
                 </div>
-                <div class="card-preview-box" data-id="${item.id}">
+                <div class="card-preview-box" data-id="${item.dbId}">
                     <div class="card-image-container">
                         <img src="${item.image}" alt="${item.emotion}" />
                     </div>
@@ -219,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="timestamp">${item.date}</span>
                 </div>
                 <div class="card-actions">
-                    <button class="delete-btn" data-id="${item.id}">
+                    <button class="delete-btn" data-id="${item.dbId}">
                         <img src="icons/delete.svg" alt="Delete" width="12" height="12" onerror="this.onerror=null; this.outerHTML='<svg width=&quot;12&quot; height=&quot;14&quot; viewBox=&quot;0 0 12 14&quot; fill=&quot;#BA1A1A&quot;><path d=&quot;M1 3h10v10H1z&quot;/></svg>'" />
                         <span>Delete</span>
                     </button>
@@ -228,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.querySelector('.card-checkbox').addEventListener('click', (e) => {
                 e.stopPropagation();
-                toggleSelectItem(item.id);
+                toggleSelectItem(item.dbId);
             });
 
             card.querySelector('.card-preview-box').addEventListener('click', () => {
@@ -237,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.querySelector('.delete-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
-                deleteItem(item.id);
+                deleteItem(item.dbId);
             });
 
             historyGrid.appendChild(card);
@@ -246,11 +243,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updateToolbarState();
     }
 
-    function toggleSelectItem(id) {
-        if (selectedItems.has(id)) {
-            selectedItems.delete(id);
+    function toggleSelectItem(dbId) {
+        if (selectedItems.has(dbId)) {
+            selectedItems.delete(dbId);
         } else {
-            selectedItems.add(id);
+            selectedItems.add(dbId);
         }
         renderCards();
     }
@@ -283,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectedItems.size === historyData.length) {
                 selectedItems.clear();
             } else {
-                historyData.forEach(item => selectedItems.add(item.id));
+                historyData.forEach(item => selectedItems.add(item.dbId));
             }
             renderCards();
         });
@@ -292,21 +289,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delete all selected scans
     if (deleteSelectedBtn) {
         deleteSelectedBtn.addEventListener('click', async () => {
-            const itemsToDelete = historyData.filter(item => selectedItems.has(item.id));
+            const itemsToDelete = historyData.filter(item => selectedItems.has(item.dbId));
 
             try {
-                // Delete each selected scan in the database first.
                 await Promise.all(
                     itemsToDelete.map(item => deleteFromServer(item.dbId))
                 );
             } catch (error) {
                 console.error('Delete selected error:', error);
                 showToast('Unable to delete the selected items.', 'error');
-                await loadHistory();   // reload so the page matches the database
+                await loadHistory();
                 return;
             }
 
-            // Then remove them from the page.
             itemsToDelete.forEach(item => {
                 const idx = historyData.indexOf(item);
                 if (idx > -1) historyData.splice(idx, 1);
@@ -319,25 +314,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Delete one scan
-    async function deleteItem(id) {
-        const item = historyData.find(entry => entry.id === id);
+    async function deleteItem(dbId) {
+        const item = historyData.find(entry => entry.dbId === dbId);
         if (!item) return;
 
         try {
             await deleteFromServer(item.dbId);
         } catch (error) {
             console.error('Delete error:', error);
-            showToast('Unable to delete this log.', 'error');
+            showToast('Unable to delete this item.', 'error');
             return;
         }
 
         const idx = historyData.indexOf(item);
         if (idx > -1) historyData.splice(idx, 1);
 
-        selectedItems.delete(id);
+        selectedItems.delete(dbId);
         renderCards();
         closeModal();
-        showToast(`Log ${id} deleted.`, 'success');
+        showToast('Scan deleted.', 'success');
     }
 
     // ========================================
@@ -371,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalDeleteBtn) {
         modalDeleteBtn.addEventListener('click', () => {
             if (currentModalItem) {
-                deleteItem(currentModalItem.id);
+                deleteItem(currentModalItem.dbId);
             }
         });
     }
@@ -386,7 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // START
     // ========================================
 
-    // Verify session, update header, and load saved scans when the page opens.
     (async () => {
         const isAuthenticated = await verifySessionAndHeader();
         if (isAuthenticated) {
