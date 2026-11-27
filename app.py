@@ -54,7 +54,7 @@ if not DATABASE_URL:
 # Tell SQLAlchemy to use the psycopg2 driver (the one we installed).
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace(
-        "postgresql://", "postgresql+psycopg2://", 1
+        "postgresql://", "postgresql+psycopg://", 1
     )
 
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
