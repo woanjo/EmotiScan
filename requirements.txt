@@ -1,6 +1,5 @@
 Flask
 gunicorn
-deepface
 tf-keras
 flask-sqlalchemy
 psycopg[binary]

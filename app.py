@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from pathlib import Path
 from datetime import datetime, timezone, date, timedelta
 from functools import wraps
-from deepface import DeepFace
 import keras
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -51,7 +50,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is missing. Check your .env file.")
 
-# Tell SQLAlchemy to use the psycopg2 driver (the one we installed).
+# Tell SQLAlchemy to use the psycopg (v3) driver.
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace(
         "postgresql://", "postgresql+psycopg://", 1
@@ -148,11 +147,6 @@ class PasswordReset(db.Model):
 
 
 # Create the tables in Neon if they do not exist yet.
-# NOTE: create_all() does NOT add columns to existing tables.
-# If needed in Neon SQL editor:
-#   ALTER TABLE scans ADD COLUMN user_id INTEGER REFERENCES users(id);
-#   ALTER TABLE users ADD COLUMN avatar BYTEA;
-# (The new password_resets table is created automatically.)
 with app.app_context():
     db.create_all()
 
@@ -166,15 +160,16 @@ MODEL_DIR = BASE_DIR / "model"
 # or write the file name, for example "emotiscan_model_v3.keras".
 MODEL_FILE = None
 
-# Which face detector DeepFace uses to find the face in the photo.
-# "opencv" is fast. If faces are missed, try "mtcnn" (pip install mtcnn).
-DETECTOR = "opencv"
-
 # Extra space kept around the detected face (0.1 = 10% of the face width).
 FACE_MARGIN = 0.1
 
 # Large photos are shrunk to this size (longest side) before face detection.
 MAX_DETECT_SIZE = 1000
+
+# Built-in OpenCV Haar Cascade face detector (replaces DeepFace).
+FACE_CASCADE = cv2.CascadeClassifier(
+    cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+)
 
 
 def load_emotion_model():
@@ -200,7 +195,7 @@ def load_emotion_model():
         class_names = json.load(file)
 
     # Image size the model was trained with.
-    img_size = 128
+    img_size = 160
     info_path = MODEL_DIR / "model_info.json"
     if info_path.exists():
         with open(info_path) as file:
@@ -231,21 +226,19 @@ def read_photo_as_bgr(path):
 
 
 def crop_face(bgr):
-    """Find the biggest face and return it cropped.
-    DeepFace raises ValueError('Face could not be detected...') if none is found."""
-    faces = DeepFace.extract_faces(
-        img_path=bgr,
-        detector_backend=DETECTOR,
-        enforce_detection=True,
-        align=False,
+    """Find the biggest face using OpenCV Haar Cascade and return it cropped."""
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    faces = FACE_CASCADE.detectMultiScale(
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(60, 60),
     )
 
-    best = max(
-        faces,
-        key=lambda f: f["facial_area"]["w"] * f["facial_area"]["h"],
-    )
-    area = best["facial_area"]
-    x, y, w, h = area["x"], area["y"], area["w"], area["h"]
+    if len(faces) == 0:
+        raise ValueError("Face could not be detected in the image.")
+
+    x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
 
     margin = int(FACE_MARGIN * w)
     top = max(y - margin, 0)
@@ -510,13 +503,6 @@ def me():
 
 # ==========================================================
 # API ROUTES: FORGOT PASSWORD (email OTP sent through Resend)
-# Flow: /api/forgot-password -> /api/verify-code -> /api/reset-password
-#       (/api/resend-code powers the 60-second "Resend Code" link)
-#
-# Needs in .env:
-#   RESEND_API_KEY=re_xxxxxxxx
-#   MAIL_FROM=EmotiScan <noreply@emotiscan.tryfitcheck.lol>
-# Without RESEND_API_KEY the code is printed in the terminal (dev mode).
 # ==========================================================
 
 RESET_CODE_TTL = timedelta(minutes=10)     # how long the emailed code works
@@ -567,7 +553,6 @@ def send_reset_email(to_email, code):
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            # Resend/Cloudflare can reject Python's default User-Agent with a 403
             "User-Agent": "EmotiScan/1.0",
         },
         method="POST",
@@ -580,8 +565,7 @@ def send_reset_email(to_email, code):
 
 
 def _send_reset_code(email):
-    """Create/refresh the code and email it. Returns seconds until next resend.
-    Same result whether or not the email exists (no account enumeration)."""
+    """Create/refresh the code and email it. Returns seconds until next resend."""
     user = User.query.filter(func.lower(User.email) == email).first()
     if user is None:
         print(f"[RESET] No account with email {email}, so nothing was sent.")
@@ -956,7 +940,7 @@ def analyze_emotion():
 
     except ValueError as error:
 
-        # DeepFace raises ValueError when it cannot find a face.
+        # Raised by crop_face() when OpenCV cannot find a face.
         db.session.rollback()
         print("Emotion analysis error:", error)
 
