@@ -1,7 +1,9 @@
 Flask
+gunicorn
 deepface
 tf-keras
 flask-sqlalchemy
 psycopg2-binary
 python-dotenv
 pillow
+opencv-python-headless
